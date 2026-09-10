@@ -1,0 +1,63 @@
+services:
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: marmot-timescaledb
+    restart: unless-stopped
+    ports:
+      - "${TIMESCALEDB_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-marmot}
+    volumes:
+      - timescaledb_data:/var/lib/postgresql/data
+      - ./docker/timescale/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-marmot}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    container_name: marmot-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: marmot-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set myminio http://minio:9000 $${MINIO_ROOT_USER:-minioadmin} $${MINIO_ROOT_PASSWORD:-minioadmin};
+      /usr/bin/mc mb --ignore-existing myminio/dashboards;
+      /usr/bin/mc mb --ignore-existing myminio/svgs;
+      /usr/bin/mc mb --ignore-existing myminio/plugins;
+      /usr/bin/mc anonymous set download myminio/svgs;
+      /usr/bin/mc anonymous set download myminio/plugins;
+      echo 'MinIO buckets and policies configured successfully.';
+      exit 0;
+      "
+    restart: "no"
+
+volumes:
+  timescaledb_data:
+    name: marmot_timescaledb_data
+  minio_data:
+    name: marmot_minio_data
