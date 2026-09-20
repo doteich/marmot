@@ -1,20 +1,21 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { OnyxButton } from 'sit-onyx'
+import { computed } from 'vue'
+import { OnyxButton, OnyxIcon } from 'sit-onyx'
+import { iconCircleInformation } from '@sit-onyx/icons'
 import { useDesigner } from '@/composables/useDesigner'
-import type { SvgBinding } from '@/types/dashboard'
+import { getWidgetConfigComponent } from '@/components/widgets/registry'
 
 const {
   dashboard,
   selectedComponent,
-  availableDataPoints,
-  isPickerActive,
   updateComponent,
   removeComponent,
-  fetchDataPoints,
 } = useDesigner()
 
-const fileInputRef = ref<HTMLInputElement | null>(null)
+const activeConfigComponent = computed(() => {
+  if (!selectedComponent.value) return null
+  return getWidgetConfigComponent(selectedComponent.value.type) || null
+})
 
 function handleNumberChange(prop: 'x' | 'y' | 'width' | 'height' | 'rotation', val: string) {
   if (!selectedComponent.value) return
@@ -23,77 +24,11 @@ function handleNumberChange(prop: 'x' | 'y' | 'width' | 'height' | 'rotation', v
   })
 }
 
-function handleSvgUpload(e: Event) {
-  const file = (e.target as HTMLInputElement).files?.[0]
-  if (!file || !selectedComponent.value) return
-
-  const reader = new FileReader()
-  reader.onload = (ev) => {
-    const text = ev.target?.result as string
-    if (text) {
-      updateComponent(selectedComponent.value!.id, {
-        props: {
-          ...selectedComponent.value!.props,
-          svgContent: text,
-        },
-      })
-    }
-  }
-  reader.readAsText(file)
-}
-
-function togglePicker() {
-  isPickerActive.value = !isPickerActive.value
-}
-
-function updateBinding(index: number, partial: Partial<SvgBinding>) {
-  if (!selectedComponent.value) return
-  const bindings = [...(selectedComponent.value.props.bindings || [])]
-  if (!bindings[index]) return
-  bindings[index] = { ...bindings[index], ...partial } as SvgBinding
-  updateComponent(selectedComponent.value.id, {
-    props: { ...selectedComponent.value.props, bindings },
-  })
-}
-
-function removeBinding(index: number) {
-  if (!selectedComponent.value) return
-  const bindings = [...(selectedComponent.value.props.bindings || [])]
-  bindings.splice(index, 1)
-  updateComponent(selectedComponent.value.id, {
-    props: { ...selectedComponent.value.props, bindings },
-  })
-}
-
-function addColorRule(bindingIndex: number) {
-  if (!selectedComponent.value) return
-  const bindings = [...(selectedComponent.value.props.bindings || [])]
-  const targetBinding = bindings[bindingIndex]
-  if (!targetBinding) return
-  const rules = [...(targetBinding.colorRules || [])]
-  rules.push({ value: rules.length + 1, color: '#f59e0b', label: 'Warning' })
-  targetBinding.colorRules = rules
-  updateComponent(selectedComponent.value.id, {
-    props: { ...selectedComponent.value.props, bindings },
-  })
-}
-
 function handleDeleteComponent() {
   if (selectedComponent.value) {
     removeComponent(selectedComponent.value.id)
   }
 }
-
-// Fetch available datapoints when component inspector mounts or opens
-watch(
-  () => selectedComponent.value?.id,
-  () => {
-    if (selectedComponent.value) {
-      fetchDataPoints()
-    }
-  },
-  { immediate: true }
-)
 </script>
 
 <template>
@@ -116,6 +51,7 @@ watch(
             <input
               type="number"
               :value="selectedComponent.x"
+              class="inspector-input"
               @input="handleNumberChange('x', ($event.target as HTMLInputElement).value)"
             />
           </div>
@@ -124,6 +60,7 @@ watch(
             <input
               type="number"
               :value="selectedComponent.y"
+              class="inspector-input"
               @input="handleNumberChange('y', ($event.target as HTMLInputElement).value)"
             />
           </div>
@@ -132,6 +69,7 @@ watch(
             <input
               type="number"
               :value="selectedComponent.width"
+              class="inspector-input"
               @input="handleNumberChange('width', ($event.target as HTMLInputElement).value)"
             />
           </div>
@@ -140,165 +78,26 @@ watch(
             <input
               type="number"
               :value="selectedComponent.height"
+              class="inspector-input"
               @input="handleNumberChange('height', ($event.target as HTMLInputElement).value)"
             />
           </div>
         </div>
       </div>
 
-      <!-- 2. SPECIFIC: SVG Machine Model -->
-      <div v-if="selectedComponent.type === 'svg-machine'" class="section-card">
-        <div class="section-title">SVG Layout & Mapping</div>
-
-        <input
-          ref="fileInputRef"
-          type="file"
-          accept=".svg"
-          style="display: none"
-          @change="handleSvgUpload"
-        />
-
-        <div class="button-row">
-          <button class="action-btn" @click="fileInputRef?.click()">
-            Upload New SVG
-          </button>
-          <button
-            class="action-btn"
-            :class="{ active: isPickerActive }"
-            @click="togglePicker"
-          >
-            {{ isPickerActive ? 'Done Picking' : '🎯 Pick SVG Shape' }}
-          </button>
-        </div>
-
-        <p v-if="isPickerActive" class="picker-help">
-          Click any shape inside the machine SVG on the canvas to add a new data binding!
-        </p>
-
-        <!-- Element Data Bindings List -->
-        <div class="bindings-section">
-          <div class="section-subtitle">
-            Active Data Bindings ({{ selectedComponent.props.bindings?.length || 0 }})
-          </div>
-
-          <div
-            v-for="(binding, idx) in selectedComponent.props.bindings || []"
-            :key="binding.elementId"
-            class="binding-card"
-          >
-            <div class="binding-card-header">
-              <span class="shape-tag">ID: {{ binding.elementId }}</span>
-              <button class="delete-btn" @click="removeBinding(idx)">✕</button>
-            </div>
-
-            <!-- Action type -->
-            <div class="form-row">
-              <label>Target Action</label>
-              <select
-                :value="binding.action"
-                @change="updateBinding(idx, { action: ($event.target as HTMLSelectElement).value as any })"
-              >
-                <option value="fill">Fill Color</option>
-                <option value="stroke">Outline / Stroke</option>
-              </select>
-            </div>
-
-            <!-- Datapoint mapping -->
-            <div class="form-row">
-              <label>Data Point</label>
-              <select
-                :value="binding.dataPoint"
-                @change="updateBinding(idx, { dataPoint: ($event.target as HTMLSelectElement).value })"
-              >
-                <option value="">-- Select Datapoint --</option>
-                <option
-                  v-for="dp in availableDataPoints"
-                  :key="`${dp.machine_id}.${dp.datapoint}`"
-                  :value="`${dp.machine_id}.${dp.datapoint}`"
-                >
-                  {{ dp.machine_id }} → {{ dp.datapoint }} ({{ dp.datatype }})
-                </option>
-                <!-- Fallback options if backend is offline -->
-                <option value="Extruder_1.Status">Extruder_1.Status</option>
-                <option value="Extruder_1.Temperature">Extruder_1.Temperature</option>
-                <option value="Conveyor_1.Status">Conveyor_1.Status</option>
-                <option value="Packer_1.Status">Packer_1.Status</option>
-              </select>
-            </div>
-
-            <!-- Status Rules -->
-            <div class="rules-container">
-              <div class="rules-header">
-                <span>Value → Color Rules</span>
-                <button class="add-rule-btn" @click="addColorRule(idx)">+ Rule</button>
-              </div>
-
-              <div
-                v-for="(rule, rIdx) in binding.colorRules"
-                :key="rIdx"
-                class="rule-row"
-              >
-                <input
-                  v-model="rule.value"
-                  placeholder="Val"
-                  class="val-input"
-                />
-                <input
-                  v-model="rule.color"
-                  type="color"
-                  class="color-picker"
-                />
-                <input
-                  v-model="rule.label"
-                  placeholder="Label"
-                  class="label-input"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 3. SPECIFIC: Gauge Properties -->
-      <div v-else-if="selectedComponent.type === 'gauge'" class="section-card">
-        <div class="section-title">Gauge Settings</div>
-        <div class="form-row">
-          <label>Title</label>
-          <input
-            v-model="selectedComponent.props.title"
-            placeholder="Metric Title"
-          />
-        </div>
-        <div class="grid-2x2">
-          <div class="field-item">
-            <label>Min</label>
-            <input v-model.number="selectedComponent.props.min" type="number" />
-          </div>
-          <div class="field-item">
-            <label>Max</label>
-            <input v-model.number="selectedComponent.props.max" type="number" />
-          </div>
-        </div>
-        <div class="form-row">
-          <label>Unit</label>
-          <input v-model="selectedComponent.props.unit" placeholder="°C, bar, rpm" />
-        </div>
-        <div class="form-row">
-          <label>Test Value</label>
-          <input
-            v-model.number="selectedComponent.props.value"
-            type="range"
-            :min="selectedComponent.props.min || 0"
-            :max="selectedComponent.props.max || 100"
-          />
-        </div>
-      </div>
+      <!-- Modular Component-Specific Configuration -->
+      <component
+        :is="activeConfigComponent"
+        v-if="activeConfigComponent"
+        :component="selectedComponent"
+      />
 
       <!-- Delete Component button -->
       <div class="danger-zone">
         <OnyxButton
           label="Delete Component"
           variation="danger"
+          class="delete-component-btn"
           @click="handleDeleteComponent"
         />
       </div>
@@ -311,11 +110,11 @@ watch(
         <div class="grid-2x2">
           <div class="field-item">
             <label>Width (px)</label>
-            <input v-model.number="dashboard.width" type="number" />
+            <input v-model.number="dashboard.width" type="number" class="inspector-input" />
           </div>
           <div class="field-item">
             <label>Height (px)</label>
-            <input v-model.number="dashboard.height" type="number" />
+            <input v-model.number="dashboard.height" type="number" class="inspector-input" />
           </div>
         </div>
       </div>
@@ -326,13 +125,16 @@ watch(
           <label>Background Color</label>
           <div class="color-row">
             <input v-model="dashboard.backgroundColor" type="color" class="color-picker" />
-            <input v-model="dashboard.backgroundColor" class="text-input" />
+            <input v-model="dashboard.backgroundColor" class="inspector-input text-input" />
           </div>
         </div>
       </div>
 
       <div class="canvas-info-box">
-        <p>💡 Tip: Click any element on the canvas to configure its position, rotation, and data point bindings.</p>
+        <div class="info-row">
+          <OnyxIcon :icon="iconCircleInformation" class="info-icon" />
+          <span>Tip: Click any element on the canvas to configure its position, rotation, and data point bindings.</span>
+        </div>
       </div>
     </div>
   </aside>
@@ -341,242 +143,196 @@ watch(
 <style scoped>
 .property-inspector {
   width: 320px;
-  background: #18181b;
-  border-left: 1px solid #27272a;
+  min-width: 320px;
+  max-width: 320px;
+  background: var(--app-surface);
+  border-left: 1px solid var(--app-border);
   display: flex;
   flex-direction: column;
   user-select: none;
   z-index: 10;
   overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .inspector-header {
   padding: 16px;
-  border-bottom: 1px solid #27272a;
+  border-bottom: 1px solid var(--app-border);
   display: flex;
   flex-direction: column;
   gap: 2px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .inspector-title {
   font-size: 14px;
   font-weight: 700;
-  color: #f4f4f5;
+  color: var(--app-text);
 }
 
 .inspector-subtitle {
   font-size: 12px;
-  color: #0284c7;
+  color: var(--app-accent);
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .inspector-content {
-  padding: 16px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .section-card {
-  background: #27272a;
-  border: 1px solid #3f3f46;
+  background: var(--app-surface-subtle);
+  border: 1px solid var(--app-border);
   border-radius: 8px;
   padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .section-title {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  color: #a1a1aa;
+  color: var(--app-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-}
-
-.section-subtitle {
-  font-size: 12px;
-  font-weight: 600;
-  color: #e4e4e7;
-  margin-bottom: 8px;
 }
 
 .grid-2x2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .field-item {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .field-item label,
 .form-row label {
   font-size: 11px;
-  color: #a1a1aa;
+  color: var(--app-text-muted);
 }
 
-.field-item input,
-.form-row input,
-.form-row select {
-  background: #18181b;
-  border: 1px solid #3f3f46;
-  border-radius: 4px;
-  color: #f4f4f5;
+.inspector-input {
+  background: var(--app-input-bg);
+  border: 1px solid var(--app-input-border);
+  border-radius: 6px;
+  color: var(--app-text);
   font-size: 12px;
   padding: 6px 8px;
   outline: none;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  transition: border-color 0.15s ease;
 }
 
-.field-item input:focus,
-.form-row input:focus,
-.form-row select:focus {
-  border-color: #0284c7;
+.inspector-input:focus {
+  border-color: var(--app-accent);
 }
 
 .form-row {
   display: flex;
   flex-direction: column;
   gap: 4px;
-}
-
-.button-row {
-  display: flex;
-  gap: 8px;
-}
-
-.action-btn {
-  flex: 1;
-  background: #3f3f46;
-  border: 1px solid #52525b;
-  color: #f4f4f5;
-  padding: 6px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.action-btn.active {
-  background: #0284c7;
-  border-color: #38bdf8;
-}
-
-.picker-help {
-  font-size: 11px;
-  color: #38bdf8;
-  background: rgba(2, 132, 199, 0.1);
-  padding: 6px 8px;
-  border-radius: 4px;
-  margin: 0;
-}
-
-.binding-card {
-  background: #18181b;
-  border: 1px solid #3f3f46;
-  border-radius: 6px;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.binding-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.shape-tag {
-  font-size: 11px;
-  font-family: monospace;
-  color: #38bdf8;
-  background: rgba(56, 189, 248, 0.1);
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-.delete-btn {
-  background: transparent;
-  border: none;
-  color: #ef4444;
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.rules-container {
-  margin-top: 4px;
-  border-top: 1px solid #27272a;
-  padding-top: 6px;
-}
-
-.rules-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 10px;
-  color: #a1a1aa;
-  margin-bottom: 6px;
-}
-
-.add-rule-btn {
-  background: transparent;
-  border: none;
-  color: #0284c7;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.rule-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 4px;
-}
-
-.val-input {
-  width: 40px;
-  font-size: 11px;
-  padding: 2px 4px;
-}
-
-.color-picker {
-  width: 28px;
-  height: 24px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-}
-
-.label-input {
-  flex: 1;
-  font-size: 11px;
-  padding: 2px 4px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .color-row {
   display: flex;
   align-items: center;
   gap: 8px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.color-picker {
+  width: 30px;
+  min-width: 30px;
+  max-width: 30px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--app-input-border);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.color-row .text-input {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .danger-zone {
-  margin-top: 8px;
+  margin-top: 4px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.delete-component-btn {
+  width: 100%;
 }
 
 .canvas-info-box {
   padding: 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 6px;
+  background: var(--app-surface-subtle);
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
   font-size: 12px;
-  color: #a1a1aa;
+  color: var(--app-text-muted);
   line-height: 1.5;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+}
+
+.info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.info-icon {
+  font-size: 14px;
+  color: var(--app-accent);
+  margin-top: 2px;
+  flex-shrink: 0;
 }
 </style>

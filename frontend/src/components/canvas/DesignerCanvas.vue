@@ -2,8 +2,8 @@
 import { ref, computed } from 'vue'
 import Moveable from 'vue3-moveable'
 import { useDesigner } from '@/composables/useDesigner'
-import SvgMachineWidget from '@/components/widgets/SvgMachineWidget.vue'
-import GaugeWidget from '@/components/widgets/GaugeWidget.vue'
+import { useTelemetry } from '@/composables/useTelemetry'
+import { getWidgetComponent } from '@/components/widgets/registry'
 import type { DashboardComponent } from '@/types/dashboard'
 
 interface MoveableDragEvent {
@@ -25,12 +25,17 @@ const {
   dashboard,
   selectedComponentId,
   selectedComponent,
+  activeElementIds,
   zoom,
   pan,
   isPickerActive,
+  isPreviewMode,
   selectComponent,
   updateComponent,
+  handleSelectElementInPicker,
 } = useDesigner()
+
+const { telemetryState } = useTelemetry()
 
 const viewportRef = ref<HTMLDivElement | null>(null)
 const artboardRef = ref<HTMLDivElement | null>(null)
@@ -42,17 +47,6 @@ const selectedTarget = computed(() => {
   if (!selectedComponentId.value || isPickerActive.value) return null
   return document.getElementById(`comp-${selectedComponentId.value}`)
 })
-
-function getWidgetComponent(type: string) {
-  switch (type) {
-    case 'svg-machine':
-      return SvgMachineWidget
-    case 'gauge':
-      return GaugeWidget
-    default:
-      return SvgMachineWidget
-  }
-}
 
 function getComponentStyle(c: DashboardComponent) {
   return {
@@ -124,30 +118,6 @@ function onRotate(e: MoveableRotateEvent) {
     rotation: Math.round(e.rotate),
   })
 }
-
-function handleSelectElementInPicker(elementId: string) {
-  if (!selectedComponent.value) return
-  // Add or update SVG binding for clicked element
-  const currentBindings = selectedComponent.value.props.bindings || []
-  const existingIdx = currentBindings.findIndex((b) => b.elementId === elementId)
-
-  if (existingIdx === -1) {
-    currentBindings.push({
-      elementId,
-      action: 'fill',
-      dataPoint: 'Extruder_1.Status',
-      defaultColor: '#64748b',
-      colorRules: [
-        { value: 1, color: '#22c55e', label: 'Production' },
-        { value: 2, color: '#ef4444', label: 'Error' },
-        { value: 0, color: '#94a3b8', label: 'Off' },
-      ],
-    })
-    updateComponent(selectedComponent.value.id, {
-      props: { ...selectedComponent.value.props, bindings: [...currentBindings] },
-    })
-  }
-}
 </script>
 
 <template>
@@ -186,7 +156,9 @@ function handleSelectElementInPicker(elementId: string) {
         <component
           :is="getWidgetComponent(comp.type)"
           v-bind="comp.props"
+          :telemetry-values="isPreviewMode ? telemetryState : undefined"
           :is-picker-active="isPickerActive && selectedComponentId === comp.id"
+          :selected-element-ids="selectedComponentId === comp.id ? activeElementIds : []"
           @select-element="handleSelectElementInPicker"
         />
       </div>
@@ -216,8 +188,8 @@ function handleSelectElementInPicker(elementId: string) {
   flex: 1;
   height: 100%;
   overflow: hidden;
-  background-color: #09090b;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-color: var(--canvas-bg);
+  background-image: radial-gradient(var(--canvas-dots) 1px, transparent 1px);
   background-size: 24px 24px;
   position: relative;
   user-select: none;

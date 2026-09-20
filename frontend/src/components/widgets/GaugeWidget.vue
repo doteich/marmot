@@ -1,3 +1,7 @@
+<script lang="ts">
+export { default as GaugeConfig } from './GaugeConfig.vue'
+</script>
+
 <script setup lang="ts">
 import { computed } from 'vue'
 
@@ -8,6 +12,8 @@ const props = withDefaults(
     max?: number
     unit?: string
     value?: number
+    dataPoint?: string
+    telemetryValues?: Record<string, unknown>
   }>(),
   {
     title: 'Pressure / Temp',
@@ -15,12 +21,23 @@ const props = withDefaults(
     max: 100,
     unit: '°C',
     value: 65,
+    dataPoint: '',
+    telemetryValues: () => ({}),
   }
 )
 
+const currentValue = computed(() => {
+  if (props.dataPoint && props.telemetryValues && props.dataPoint in props.telemetryValues) {
+    const raw = props.telemetryValues[props.dataPoint]
+    const parsed = Number(raw)
+    if (!isNaN(parsed)) return parsed
+  }
+  return props.value
+})
+
 const percentage = computed(() => {
   const range = props.max - props.min || 1
-  const pct = Math.max(0, Math.min(100, ((props.value - props.min) / range) * 100))
+  const pct = Math.max(0, Math.min(100, ((currentValue.value - props.min) / range) * 100))
   return pct
 })
 
@@ -67,7 +84,7 @@ const strokeDashoffset = computed(() => {
         />
       </svg>
       <div class="gauge-readout">
-        <span class="gauge-val">{{ value.toFixed(1) }}</span>
+        <span class="gauge-val">{{ currentValue.toFixed(1) }}</span>
         <span class="gauge-unit">{{ unit }}</span>
       </div>
     </div>

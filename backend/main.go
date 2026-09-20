@@ -13,11 +13,14 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
 var (
-	Logger *slog.Logger
-	Conn   *pgxpool.Pool
+	Logger      *slog.Logger
+	Conn        *pgxpool.Pool
+	MinioClient *minio.Client
 )
 
 func init() {
@@ -26,11 +29,11 @@ func init() {
 		fmt.Println("unable to read env: ", err)
 		os.Exit(0)
 	}
-	lvl_str := os.Getenv("LOG_LEVEL")
+	lvlStr := os.Getenv("LOG_LEVEL")
 
 	var lvl slog.Leveler
 
-	switch lvl_str {
+	switch lvlStr {
 	case "DEBUG":
 		lvl = slog.LevelDebug
 	case "WARN":
@@ -46,14 +49,17 @@ func init() {
 }
 
 func main() {
-
 	ctx := context.Background()
-	con_str := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_PASSWORD"), os.Getenv("POSTGRES_URL"), os.Getenv("POSTGRES_PORT"), os.Getenv("POSTGRES_DB"))
+	conStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
+		os.Getenv("POSTGRES_USER"),
+		os.Getenv("POSTGRES_PASSWORD"),
+		os.Getenv("POSTGRES_URL"),
+		os.Getenv("POSTGRES_PORT"),
+		os.Getenv("POSTGRES_DB"),
+	)
 
 	var err error
-
-	Conn, err = pgxpool.New(ctx, con_str)
-
+	Conn, err = pgxpool.New(ctx, conStr)
 	if err != nil {
 		Logger.Error("unable to connect to database", "error", err)
 		os.Exit(1)
@@ -64,17 +70,51 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Initialize MinIO client
+	minioHost := os.Getenv("MINIO_HOST")
+	if minioHost == "" {
+		minioHost = "localhost"
+	}
+	minioEndpoint := fmt.Sprintf("%s:%s", minioHost, os.Getenv("MINIO_PORT"))
+
+	MinioClient, err = minio.New(minioEndpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(os.Getenv("MINIO_ROOT_USER"), os.Getenv("MINIO_ROOT_PASSWORD"), ""),
+		Secure: false,
+	})
+	if err != nil {
+		Logger.Error("unable to initialize MinIO client", "error", err)
+		os.Exit(1)
+	}
+	Logger.Info("connected to MinIO", "endpoint", minioEndpoint)
+
+	// Initialize edge sync table
+	if err := InitEdgeDatapointsTable(ctx); err != nil {
+		Logger.Warn("could not ensure edge_datapoints table", "error", err)
+	}
+
 	router := chi.NewRouter()
 	router.Use(cors.Handler(cors.Options{
-		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
-		AllowedOrigins: []string{"https://*", "http://*"},
-		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
+		AllowedOrigins:   []string{"https://*", "http://*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: false,
-		MaxAge:           300, // Maximum value not ignored by any of major browsers
+		MaxAge:           300,
 	}))
+
+	// Register SVG Catalog Endpoints
+	router.Post("/api/svgs/upload", UploadSVGHandler)
+	router.Get("/api/svgs", ListSVGHandler)
+	router.Get("/api/svgs/{id}/content", GetSVGContentHandler)
+	router.Delete("/api/svgs/{id}", DeleteSVGHandler)
+
+	// Register Edge Sync Endpoint
+	router.Post("/api/edge/datapoints", SyncEdgeDatapointsHandler)
+
+	// Register Site Management Endpoints
+	router.Get("/api/sites", ListSitesHandler)
+	router.Get("/api/sites/{id}", GetSiteHandler)
+	router.Put("/api/sites/{id}", UpdateSiteHandler)
 
 	api := humachi.New(router, huma.DefaultConfig("marmot", "0.0.1"))
 
@@ -90,5 +130,4 @@ func main() {
 	if err := http.ListenAndServe("127.0.0.1:3000", router); err != nil {
 		Logger.Error("unable to startup webserver", "error", err)
 	}
-
 }

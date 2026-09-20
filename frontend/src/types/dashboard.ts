@@ -7,7 +7,9 @@ export interface ColorRule {
 }
 
 export interface SvgBinding {
-  elementId: string // e.g. draw.io cell ID or marmot-svg-id
+  elementId: string // Primary draw.io cell ID or marmot-svg-id
+  elementIds?: string[] // Optional array of multiple grouped element IDs
+  groupName?: string // Optional friendly name for compound shape group
   action: 'fill' | 'stroke'
   dataPoint: string // format: machine_id.data_point or data_point
   colorRules: ColorRule[]
@@ -52,6 +54,7 @@ export interface DashboardComponent {
 export interface DashboardConfig {
   id: string
   name: string
+  siteId?: string
   description?: string
   width: number
   height: number
@@ -61,9 +64,20 @@ export interface DashboardConfig {
   updatedAt: string
 }
 
+export interface SiteInfo {
+  id: string
+  name: string
+  description?: string
+  wsUrl: string
+  status?: string
+  lastSeenAt?: string
+  createdAt?: string
+}
+
 export interface DataPoint {
-  server_id: string
-  machine_id: string
-  datapoint: string
-  datatype: string
+  dataPointId: string
+  dataPointName: string
+  machineId: string
+  dataType: string
+  unit?: string
 }

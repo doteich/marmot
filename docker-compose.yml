@@ -56,8 +56,25 @@ services:
       "
     restart: "no"
 
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: marmot-mosquitto
+    restart: unless-stopped
+    ports:
+      - "${MOSQUITTO_PORT:-1883}:1883"
+      - "${MOSQUITTO_WS_PORT:-9002}:9002"
+    volumes:
+      - ./docker/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+
 volumes:
   timescaledb_data:
     name: marmot_timescaledb_data
   minio_data:
     name: marmot_minio_data
+  mosquitto_data:
+    name: marmot_mosquitto_data
+  mosquitto_log:
+    name: marmot_mosquitto_log
+

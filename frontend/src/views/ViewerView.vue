@@ -1,29 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import SvgMachineWidget from '@/components/widgets/SvgMachineWidget.vue'
-import GaugeWidget from '@/components/widgets/GaugeWidget.vue'
+import { getWidgetComponent } from '@/components/widgets/registry'
+import { useTelemetry } from '@/composables/useTelemetry'
 import type { DashboardConfig, DashboardComponent } from '@/types/dashboard'
 
 const route = useRoute()
 const dashboard = ref<DashboardConfig | null>(null)
-const telemetryState = ref<Record<string, unknown>>({
-  'Extruder_1.Status': 1,
-  'Extruder_1.Temperature': 87.9,
-  'Conveyor_1.Status': 1,
-  'Packer_1.Status': 2,
-})
-
-function getWidgetComponent(type: string) {
-  switch (type) {
-    case 'svg-machine':
-      return SvgMachineWidget
-    case 'gauge':
-      return GaugeWidget
-    default:
-      return SvgMachineWidget
-  }
-}
+const { telemetryState, isWsConnected, connect } = useTelemetry()
 
 function getComponentStyle(c: DashboardComponent) {
   return {
@@ -43,6 +27,7 @@ onMounted(async () => {
   dashboard.value = {
     id: String(route.params.id || 'demo'),
     name: 'Production Line 1 - Live Monitor',
+    siteId: 'factory-edge-01',
     width: 1920,
     height: 1080,
     backgroundColor: '#111827',
@@ -65,7 +50,7 @@ onMounted(async () => {
             {
               elementId: 'wYcdrV7rxjeMivQmTptT-7',
               action: 'fill',
-              dataPoint: 'Packer_1.Status',
+              dataPoint: 'ns=2;s=Packer1.Status',
               defaultColor: '#e2e8f0',
               colorRules: [
                 { value: 1, color: '#22c55e', label: 'Running' },
@@ -75,7 +60,7 @@ onMounted(async () => {
             {
               elementId: 'wYcdrV7rxjeMivQmTptT-2',
               action: 'fill',
-              dataPoint: 'Conveyor_1.Status',
+              dataPoint: 'ns=2;s=Conveyor1.Status',
               defaultColor: '#e2e8f0',
               colorRules: [
                 { value: 1, color: '#22c55e', label: 'Running' },
@@ -100,11 +85,26 @@ onMounted(async () => {
           max: 120,
           unit: '°C',
           value: 87.9,
-          dataPoint: 'Extruder_1.Temperature',
+          dataPoint: 'ns=2;s=Extruder1.Temperature',
         },
       },
     ],
   }
+
+  // Resolve target WebSocket URL from site registry
+  let targetWsUrl: string | undefined
+  if (dashboard.value?.siteId) {
+    try {
+      const siteRes = await fetch(`/api/sites/${encodeURIComponent(dashboard.value.siteId)}`)
+      if (siteRes.ok) {
+        const siteData = await siteRes.json()
+        targetWsUrl = siteData.wsUrl
+      }
+    } catch (e) {
+      console.warn('Could not fetch site details for viewer', e)
+    }
+  }
+  connect(targetWsUrl)
 })
 </script>
 
@@ -112,7 +112,9 @@ onMounted(async () => {
   <div class="viewer-layout">
     <div class="viewer-top-bar">
       <div class="brand">
-        <span class="badge">LIVE</span>
+        <span class="badge" :style="{ background: isWsConnected ? '#22c55e' : '#64748b' }">
+          {{ isWsConnected ? 'LIVE' : 'OFFLINE' }}
+        </span>
         <span class="title">{{ dashboard?.name || 'Marmot Viewer' }}</span>
       </div>
       <div class="clock">
