@@ -4,6 +4,7 @@ import { iconMoon, iconSunny, iconZoomIn, iconZoomOut } from '@sit-onyx/icons'
 import { useDesigner } from '@/composables/useDesigner'
 import { useTheme } from '@/composables/useTheme'
 
+
 const {
   dashboard,
   availableSites,
@@ -53,31 +54,23 @@ function handleResolutionChange(e: Event) {
   <header class="designer-header">
     <div class="header-left">
       <div class="logo">
-        <span class="logo-badge">M</span>
-        <span class="app-name">Marmot</span>
+        <img src="/logo.png">
       </div>
       <span class="divider">/</span>
-      <input
-        v-model="dashboard.name"
-        class="dashboard-name-input"
-        placeholder="Dashboard Name"
-      />
+      <input v-model="dashboard.name" class="dashboard-name-input" placeholder="Dashboard Name" />
     </div>
 
     <div class="header-center">
       <!-- Plant / Site selector -->
       <div class="toolbar-group">
         <label class="toolbar-label">Plant / Site</label>
-        <select
-          :value="dashboard.siteId || ''"
-          class="site-select"
-          title="Filter datapoints by target plant"
-          @change="setDashboardSite(($event.target as HTMLSelectElement).value)"
-        >
+        <select :value="dashboard.siteId || ''" class="site-select" title="Filter datapoints by target plant"
+          @change="setDashboardSite(($event.target as HTMLSelectElement).value)">
           <option v-for="site in availableSites" :key="site.id" :value="site.id">
             {{ site.name }} ({{ site.id }})
           </option>
-          <option v-if="dashboard.siteId && !availableSites.some(s => s.id === dashboard.siteId)" :value="dashboard.siteId">
+          <option v-if="dashboard.siteId && !availableSites.some(s => s.id === dashboard.siteId)"
+            :value="dashboard.siteId">
             {{ dashboard.siteId }}
           </option>
         </select>
@@ -112,39 +105,24 @@ function handleResolutionChange(e: Event) {
       </div>
 
       <!-- Picker mode indicator if active -->
-      <OnyxBadge
-        v-if="isPickerActive"
-        variation="danger"
-        class="pulse-badge"
-      >
+      <OnyxBadge v-if="isPickerActive" variation="danger" class="pulse-badge">
         Element Picker Active
       </OnyxBadge>
     </div>
 
     <div class="header-right">
       <!-- Dark / Light Mode Toggle Button -->
-      <button
-        class="theme-toggle-btn"
-        :title="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
-        @click="toggleTheme"
-      >
+      <button class="theme-toggle-btn" :title="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+        @click="toggleTheme">
         <OnyxIcon :icon="isDark ? iconMoon : iconSunny" class="theme-icon" />
         <span class="theme-text">{{ isDark ? 'Dark' : 'Light' }}</span>
       </button>
 
-      <button
-        class="mode-btn"
-        :class="{ active: isPreviewMode }"
-        @click="isPreviewMode = !isPreviewMode"
-      >
+      <button class="mode-btn" :class="{ active: isPreviewMode }" @click="isPreviewMode = !isPreviewMode">
         {{ isPreviewMode ? 'Edit Mode' : 'Test Mode' }}
       </button>
 
-      <OnyxButton
-        label="Save Dashboard"
-        variation="primary"
-        @click="handleSave"
-      />
+      <OnyxButton label="Save Dashboard" variation="primary" @click="handleSave" />
     </div>
   </header>
 </template>
@@ -179,18 +157,19 @@ function handleResolutionChange(e: Event) {
   font-weight: 700;
 }
 
-.logo-badge {
-  background: var(--app-accent);
+.logo>img {
   color: #ffffff;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
+  width: 38px;
+  height: 38px;
+  border-radius: 70%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 16px;
   font-weight: 800;
+ box-shadow: 0px 0px 10px 1px #8601c9;
 }
+
 
 .app-name {
   font-size: 16px;
@@ -335,7 +314,14 @@ function handleResolutionChange(e: Event) {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
 }
 </style>
