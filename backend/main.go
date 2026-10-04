@@ -116,6 +116,9 @@ func main() {
 	router.Get("/api/sites/{id}", GetSiteHandler)
 	router.Put("/api/sites/{id}", UpdateSiteHandler)
 
+	// Register Historical Telemetry Query Endpoint
+	router.Get("/api/telemetry/history", GetTelemetryHistoryHandler)
+
 	api := humachi.New(router, huma.DefaultConfig("marmot", "0.0.1"))
 
 	huma.Register(api, huma.Operation{

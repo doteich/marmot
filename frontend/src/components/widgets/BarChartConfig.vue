@@ -34,31 +34,39 @@ function updateProp(key: string, value: unknown) {
     },
   })
 }
+
+const colorPresets = [
+  { label: 'Emerald', color: '#10b981' },
+  { label: 'Sky Blue', color: '#0284c7' },
+  { label: 'Amber', color: '#f59e0b' },
+  { label: 'Purple', color: '#8b5cf6' },
+  { label: 'Rose', color: '#f43f5e' },
+]
 </script>
 
 <template>
-  <div class="gauge-config">
+  <div class="bar-chart-config">
     <div class="section-card">
-      <div class="section-title">Gauge Settings</div>
+      <div class="section-title">Telemetry Binding</div>
 
       <div class="form-row">
         <label>Title</label>
         <input
-          :value="component.props.title"
-          placeholder="Metric Title"
+          :value="component.props.title ?? 'Output / Throughput'"
+          placeholder="Chart Title"
           class="inspector-input"
           @input="updateProp('title', ($event.target as HTMLInputElement).value)"
         />
       </div>
 
       <div class="form-row">
-        <label>Data Point (TimescaleDB / OPC UA)</label>
+        <label>Data Point (Bucketed Metrics)</label>
         <select
           :value="component.props.dataPoint || ''"
           class="inspector-select"
           @change="updateProp('dataPoint', ($event.target as HTMLSelectElement).value)"
         >
-          <option value="">-- Manual / Test Mode --</option>
+          <option value="">-- Select Datapoint --</option>
           <optgroup
             v-for="group in groupedDataPoints"
             :key="group.machineId"
@@ -83,22 +91,35 @@ function updateProp(key: string, value: unknown) {
 
       <div class="grid-2x2">
         <div class="field-item">
-          <label>Min</label>
-          <input
-            :value="component.props.min ?? 0"
-            type="number"
-            class="inspector-input"
-            @input="updateProp('min', Number(($event.target as HTMLInputElement).value))"
-          />
+          <label>Bucket Interval</label>
+          <select
+            :value="component.props.interval || '1h'"
+            class="inspector-select"
+            @change="updateProp('interval', ($event.target as HTMLSelectElement).value)"
+          >
+            <option value="5m">5 Minutes</option>
+            <option value="10m">10 Minutes</option>
+            <option value="15m">15 Minutes</option>
+            <option value="30m">30 Minutes</option>
+            <option value="1h">1 Hour</option>
+            <option value="4h">4 Hours</option>
+            <option value="8h">8 Hours (Shift)</option>
+            <option value="24h">24 Hours (Day)</option>
+          </select>
         </div>
+
         <div class="field-item">
-          <label>Max</label>
-          <input
-            :value="component.props.max ?? 100"
-            type="number"
-            class="inspector-input"
-            @input="updateProp('max', Number(($event.target as HTMLInputElement).value))"
-          />
+          <label>Calculation</label>
+          <select
+            :value="component.props.calcMode || 'delta'"
+            class="inspector-select"
+            @change="updateProp('calcMode', ($event.target as HTMLSelectElement).value)"
+          >
+            <option value="delta">Delta (Last - First)</option>
+            <option value="sum">Sum</option>
+            <option value="avg">Average</option>
+            <option value="max">Max</option>
+          </select>
         </div>
       </div>
 
@@ -106,22 +127,61 @@ function updateProp(key: string, value: unknown) {
         <label>Unit</label>
         <input
           :value="component.props.unit || ''"
-          placeholder="°C, bar, rpm, %"
+          placeholder="e.g. pcs, kg, units"
           class="inspector-input"
           @input="updateProp('unit', ($event.target as HTMLInputElement).value)"
         />
       </div>
+    </div>
+
+    <!-- Appearance & Target Line -->
+    <div class="section-card">
+      <div class="section-title">Bar Appearance & Targets</div>
 
       <div class="form-row">
-        <label>Test Value ({{ component.props.value ?? 0 }})</label>
-        <input
-          :value="component.props.value ?? 0"
-          type="range"
-          :min="component.props.min ?? 0"
-          :max="component.props.max ?? 100"
-          class="inspector-range"
-          @input="updateProp('value', Number(($event.target as HTMLInputElement).value))"
-        />
+        <label>Bar Color</label>
+        <div class="color-presets">
+          <button
+            v-for="p in colorPresets"
+            :key="p.color"
+            class="color-btn"
+            :class="{ active: (component.props.barColor || '#10b981') === p.color }"
+            :style="{ backgroundColor: p.color }"
+            :title="p.label"
+            @click="updateProp('barColor', p.color)"
+          />
+          <input
+            :value="component.props.barColor || '#10b981'"
+            type="text"
+            class="inspector-input hex-input"
+            @input="updateProp('barColor', ($event.target as HTMLInputElement).value)"
+          />
+        </div>
+      </div>
+
+      <div class="grid-2x2">
+        <div class="field-item">
+          <label>Target Line</label>
+          <select
+            :value="component.props.showTargetLine ? 'true' : 'false'"
+            class="inspector-select"
+            @change="updateProp('showTargetLine', ($event.target as HTMLSelectElement).value === 'true')"
+          >
+            <option value="false">Hidden</option>
+            <option value="true">Visible</option>
+          </select>
+        </div>
+
+        <div class="field-item" v-if="component.props.showTargetLine">
+          <label>Target Value</label>
+          <input
+            :value="component.props.targetValue"
+            type="number"
+            placeholder="e.g. 500"
+            class="inspector-input"
+            @input="updateProp('targetValue', ($event.target as HTMLInputElement).value ? Number(($event.target as HTMLInputElement).value) : undefined)"
+          />
+        </div>
       </div>
     </div>
 
@@ -164,13 +224,11 @@ function updateProp(key: string, value: unknown) {
 </template>
 
 <style scoped>
-.gauge-config {
+.bar-chart-config {
   display: flex;
   flex-direction: column;
   gap: 12px;
   width: 100%;
-  max-width: 100%;
-  min-width: 0;
   box-sizing: border-box;
 }
 
@@ -183,9 +241,6 @@ function updateProp(key: string, value: unknown) {
   flex-direction: column;
   gap: 10px;
   box-sizing: border-box;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
 }
 
 .section-title {
@@ -200,18 +255,12 @@ function updateProp(key: string, value: unknown) {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
 }
 
 .field-item {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-width: 0;
-  box-sizing: border-box;
 }
 
 .field-item label,
@@ -231,11 +280,6 @@ function updateProp(key: string, value: unknown) {
   outline: none;
   box-sizing: border-box;
   width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
   transition: border-color 0.15s ease;
 }
 
@@ -248,16 +292,32 @@ function updateProp(key: string, value: unknown) {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
 }
 
-.inspector-range {
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
+.color-presets {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.color-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  border: 2px solid transparent;
   cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.color-btn:hover {
+  transform: scale(1.1);
+}
+
+.color-btn.active {
+  border-color: #f8fafc;
+}
+
+.hex-input {
+  flex: 1;
 }
 </style>

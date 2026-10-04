@@ -15,6 +15,9 @@
     "format": "oxfmt src/"
   },
   "dependencies": {
+    "chart.js": "^4.5.1",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "date-fns": "^4.4.0",
     "sit-onyx": "^1.20.0",
     "vue": "^3.5.40",
     "vue-router": "^5.2.0",

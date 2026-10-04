@@ -11,10 +11,11 @@ import (
 	"syscall"
 	"time"
 
+	"marmot-backend-service/internal/edge"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
-	"marmot-backend-service/internal/edge"
 )
 
 func getEnv(key, fallback string) string {
@@ -107,7 +108,7 @@ func main() {
 	})
 
 	server := &http.Server{
-		Addr:    fmt.Sprintf("0.0.0.0:%s", edgePort),
+		Addr:    fmt.Sprintf("127.0.0.1:%s", edgePort),
 		Handler: router,
 	}
 

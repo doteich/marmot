@@ -5,6 +5,7 @@ import router from './router'
 
 import 'sit-onyx/style.css'
 import 'sit-onyx/global.css'
+import './plugins/chart'
 
 const app = createApp(App)
 const onyx = createOnyx({ router })

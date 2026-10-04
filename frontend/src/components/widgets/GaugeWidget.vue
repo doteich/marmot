@@ -13,6 +13,8 @@ const props = withDefaults(
     unit?: string
     value?: number
     dataPoint?: string
+    backgroundColor?: string
+    borderColor?: string
     telemetryValues?: Record<string, unknown>
   }>(),
   {
@@ -22,6 +24,8 @@ const props = withDefaults(
     unit: '°C',
     value: 65,
     dataPoint: '',
+    backgroundColor: '',
+    borderColor: '',
     telemetryValues: () => ({}),
   }
 )
@@ -51,7 +55,13 @@ const strokeDashoffset = computed(() => {
 </script>
 
 <template>
-  <div class="gauge-card">
+  <div
+    class="gauge-card"
+    :style="{
+      backgroundColor: backgroundColor || 'var(--app-surface)',
+      borderColor: borderColor || 'var(--app-border)',
+    }"
+  >
     <div class="gauge-title">{{ title }}</div>
     <div class="gauge-content">
       <svg viewBox="0 0 100 100" class="gauge-svg">
@@ -61,7 +71,7 @@ const strokeDashoffset = computed(() => {
           cy="50"
           r="40"
           fill="none"
-          stroke="#334155"
+          stroke="var(--app-border)"
           stroke-width="8"
           stroke-dasharray="188.49"
           stroke-dashoffset="62.83"
@@ -99,22 +109,23 @@ const strokeDashoffset = computed(() => {
 .gauge-card {
   width: 100%;
   height: 100%;
-  background: #1e293b;
   border-radius: 8px;
-  border: 1px solid #334155;
+  border-width: 1px;
+  border-style: solid;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
   padding: 12px;
   box-sizing: border-box;
-  color: #f8fafc;
+  color: var(--app-text);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .gauge-title {
   font-size: 13px;
   font-weight: 600;
-  color: #94a3b8;
+  color: var(--app-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -148,12 +159,13 @@ const strokeDashoffset = computed(() => {
 .gauge-val {
   font-size: 22px;
   font-weight: 700;
+  color: var(--app-text);
   line-height: 1;
 }
 
 .gauge-unit {
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--app-text-muted);
   margin-top: 2px;
 }
 
@@ -162,6 +174,6 @@ const strokeDashoffset = computed(() => {
   display: flex;
   justify-content: space-between;
   font-size: 11px;
-  color: #64748b;
+  color: var(--app-text-muted);
 }
 </style>

@@ -10,6 +10,10 @@ const {
   selectedComponent,
   updateComponent,
   removeComponent,
+  bringToFront,
+  sendToBack,
+  bringForward,
+  sendBackward,
 } = useDesigner()
 
 const activeConfigComponent = computed(() => {
@@ -81,6 +85,44 @@ function handleDeleteComponent() {
               class="inspector-input"
               @input="handleNumberChange('height', ($event.target as HTMLInputElement).value)"
             />
+          </div>
+        </div>
+
+        <!-- Layer Order / z-Index -->
+        <div class="layer-order-row">
+          <div class="layer-info">
+            <label>Layer (z-Index)</label>
+            <span class="layer-badge">{{ selectedComponent.zIndex || 1 }}</span>
+          </div>
+          <div class="layer-actions">
+            <button
+              class="layer-btn"
+              title="Bring to Front"
+              @click="bringToFront(selectedComponent.id)"
+            >
+              ⇈ Front
+            </button>
+            <button
+              class="layer-btn"
+              title="Bring Forward"
+              @click="bringForward(selectedComponent.id)"
+            >
+              ↑ Up
+            </button>
+            <button
+              class="layer-btn"
+              title="Send Backward"
+              @click="sendBackward(selectedComponent.id)"
+            >
+              ↓ Down
+            </button>
+            <button
+              class="layer-btn"
+              title="Send to Back"
+              @click="sendToBack(selectedComponent.id)"
+            >
+              ⇊ Back
+            </button>
           </div>
         </div>
       </div>
@@ -334,5 +376,60 @@ function handleDeleteComponent() {
   color: var(--app-accent);
   margin-top: 2px;
   flex-shrink: 0;
+}
+
+/* Layer Order Controls */
+.layer-order-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--app-border);
+}
+
+.layer-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.layer-info label {
+  font-size: 11px;
+  color: var(--app-text-muted);
+}
+
+.layer-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--app-accent);
+  background: rgba(2, 132, 199, 0.12);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.layer-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.layer-btn {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  color: var(--app-text);
+  border-radius: 4px;
+  padding: 4px 2px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.layer-btn:hover {
+  background: var(--app-surface-hover);
+  border-color: var(--app-accent);
+  color: var(--app-accent);
 }
 </style>

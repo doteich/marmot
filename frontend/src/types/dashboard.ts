@@ -1,4 +1,14 @@
-export type ComponentType = 'svg-machine' | 'gauge' | 'chart' | 'silo' | 'custom-plugin'
+export type ComponentType =
+  | 'svg-machine'
+  | 'gauge'
+  | 'chart'
+  | 'trend-chart'
+  | 'bar-chart'
+  | 'traffic-light'
+  | 'text-label'
+  | 'silo'
+  | 'custom-plugin'
+  | (string & {})
 
 export interface ColorRule {
   value: string | number | boolean
@@ -32,15 +42,43 @@ export interface DashboardComponent {
     svgUrl?: string
     bindings?: SvgBinding[]
 
-    // Gauge props
+    // Common / Gauge / Indicator props
     min?: number
     max?: number
     unit?: string
     dataPoint?: string
     title?: string
+    value?: number
 
     // Chart props
     timeWindowMinutes?: number
+    showArea?: boolean
+    lineColor?: string
+    showGrid?: boolean
+
+    // Bar chart props
+    barColor?: string
+    targetValue?: number
+    showTargetLine?: boolean
+
+    // Traffic light props
+    orientation?: 'vertical' | 'horizontal'
+    showLabels?: boolean
+    ruleMode?: 'threshold' | 'discrete'
+    redThreshold?: number
+    yellowThreshold?: number
+    activeState?: 'red' | 'yellow' | 'green' | 'off'
+
+    // Text label props
+    text?: string
+    fontSize?: number
+    fontWeight?: string
+    textColor?: string
+    backgroundColor?: string
+    borderColor?: string
+    borderRadius?: number
+    textAlign?: 'left' | 'center' | 'right'
+    padding?: number
 
     // Silo props
     capacity?: number

@@ -1,5 +1,6 @@
 import { reactive, ref, computed } from 'vue'
 import type { DashboardConfig, DashboardComponent, DataPoint, ComponentType, SvgBinding, SiteInfo } from '@/types/dashboard'
+import { getWidgetManifest } from '@/components/widgets/registry'
 
 const defaultDashboard: DashboardConfig = {
   id: 'dash-' + Date.now(),
@@ -77,14 +78,11 @@ export function useDesigner() {
 
   function addComponent(type: ComponentType, initialProps: Record<string, unknown> = {}) {
     const id = `${type}-${Date.now()}`
-    const baseName =
-      type === 'svg-machine'
-        ? 'Machine Layout'
-        : type === 'gauge'
-          ? 'Gauge Indicator'
-          : type === 'chart'
-            ? 'Trend Chart'
-            : 'Silo Indicator'
+    const manifest = getWidgetManifest(type)
+    const baseName = manifest?.name || type
+    const width = manifest?.defaultSize?.width ?? 300
+    const height = manifest?.defaultSize?.height ?? 200
+    const defaultProps = manifest?.defaultProps ? JSON.parse(JSON.stringify(manifest.defaultProps)) : {}
 
     const newComponent: DashboardComponent = {
       id,
@@ -92,11 +90,12 @@ export function useDesigner() {
       name: `${baseName} ${dashboard.components.length + 1}`,
       x: 100 + (dashboard.components.length % 5) * 40,
       y: 100 + (dashboard.components.length % 5) * 40,
-      width: type === 'svg-machine' ? 500 : type === 'chart' ? 450 : 250,
-      height: type === 'svg-machine' ? 350 : type === 'chart' ? 280 : 250,
+      width,
+      height,
       rotation: 0,
       zIndex: dashboard.components.length + 1,
       props: {
+        ...defaultProps,
         ...initialProps,
       },
     }
@@ -124,6 +123,45 @@ export function useDesigner() {
         selectedComponentId.value = null
       }
     }
+  }
+
+  function bringToFront(id: string) {
+    const comp = dashboard.components.find((c) => c.id === id)
+    if (!comp) return
+    const maxZ = dashboard.components.reduce((max, c) => Math.max(max, c.zIndex || 1), 1)
+    comp.zIndex = maxZ + 1
+    dashboard.updatedAt = new Date().toISOString()
+  }
+
+  function sendToBack(id: string) {
+    const comp = dashboard.components.find((c) => c.id === id)
+    if (!comp) return
+    const minZ = dashboard.components.reduce((min, c) => Math.min(min, c.zIndex || 1), 1)
+    if (minZ > 1) {
+      comp.zIndex = minZ - 1
+    } else {
+      dashboard.components.forEach((c) => {
+        if (c.id !== id) {
+          c.zIndex = (c.zIndex || 1) + 1
+        }
+      })
+      comp.zIndex = 1
+    }
+    dashboard.updatedAt = new Date().toISOString()
+  }
+
+  function bringForward(id: string) {
+    const comp = dashboard.components.find((c) => c.id === id)
+    if (!comp) return
+    comp.zIndex = (comp.zIndex || 1) + 1
+    dashboard.updatedAt = new Date().toISOString()
+  }
+
+  function sendBackward(id: string) {
+    const comp = dashboard.components.find((c) => c.id === id)
+    if (!comp) return
+    comp.zIndex = Math.max(1, (comp.zIndex || 1) - 1)
+    dashboard.updatedAt = new Date().toISOString()
   }
 
   function setZoom(newZoom: number) {
@@ -376,6 +414,10 @@ export function useDesigner() {
     addComponent,
     updateComponent,
     removeComponent,
+    bringToFront,
+    sendToBack,
+    bringForward,
+    sendBackward,
     setZoom,
     zoomIn,
     zoomOut,

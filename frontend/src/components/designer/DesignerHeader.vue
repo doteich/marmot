@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { OnyxButton, OnyxBadge, OnyxIcon } from 'sit-onyx'
-import { iconMoon, iconSunny, iconZoomIn, iconZoomOut } from '@sit-onyx/icons'
+import { iconMoon, iconSunny, iconZoomIn, iconZoomOut, iconClock, iconSync } from '@sit-onyx/icons'
+import { watch } from 'vue'
 import { useDesigner } from '@/composables/useDesigner'
 import { useTheme } from '@/composables/useTheme'
+import { useTelemetryCoordinator } from '@/composables/useTelemetryCoordinator'
 
 
 const {
@@ -19,6 +21,20 @@ const {
 } = useDesigner()
 
 const { isDark, toggleTheme } = useTheme()
+
+const {
+  timeRange,
+  setTimeRange,
+  refreshNow,
+  isLoading: isTelemetryLoading,
+  configureAutoRefresh,
+} = useTelemetryCoordinator()
+
+// In Design Mode: 0s (no background polling, fetch once on demand/mount).
+// In Test / Preview Mode: 10s auto-refresh interval.
+watch(isPreviewMode, (preview) => {
+  configureAutoRefresh(preview ? 10 : 0)
+})
 
 function handleSave() {
   const json = exportJson()
@@ -89,7 +105,6 @@ function handleResolutionChange(e: Event) {
         </select>
       </div>
 
-      <span class="divider"></span>
 
       <!-- Zoom controls -->
       <div class="toolbar-group">
@@ -103,6 +118,29 @@ function handleResolutionChange(e: Event) {
           <OnyxIcon :icon="iconZoomIn" />
         </button>
       </div>
+
+      <span class="divider"></span>
+
+
+
+      <!-- Telemetry Time Window & Sync -->
+      <div class="toolbar-group">
+        <OnyxIcon :icon="iconClock" class="time-icon" />
+        <label class="toolbar-label">Time</label>
+        <select :value="timeRange" class="time-select" title="Historical telemetry time range"
+          @change="setTimeRange(($event.target as HTMLSelectElement).value)">
+          <option value="15m">15m</option>
+          <option value="1h">1h</option>
+          <option value="8h">8h</option>
+          <option value="24h">24h</option>
+          <option value="7d">7d</option>
+        </select>
+        <button class="icon-btn sync-btn" :class="{ 'is-loading': isTelemetryLoading }" title="Refresh historical data"
+          :disabled="isTelemetryLoading" @click="refreshNow">
+          <OnyxIcon :icon="iconSync" />
+        </button>
+      </div>
+
 
       <!-- Picker mode indicator if active -->
       <OnyxBadge v-if="isPickerActive" variation="danger" class="pulse-badge">
@@ -167,7 +205,7 @@ function handleResolutionChange(e: Event) {
   justify-content: center;
   font-size: 16px;
   font-weight: 800;
- box-shadow: 0px 0px 10px 1px #8601c9;
+  box-shadow: 0px 0px 10px 1px #8601c9;
 }
 
 
@@ -216,7 +254,8 @@ function handleResolutionChange(e: Event) {
 }
 
 .resolution-select,
-.site-select {
+.site-select,
+.time-select {
   background: transparent;
   border: none;
   color: var(--app-text);
@@ -227,8 +266,36 @@ function handleResolutionChange(e: Event) {
   max-width: 180px;
 }
 
+.time-select {
+  max-width: 75px;
+  margin-right: 4px;
+}
+
+.time-icon {
+  font-size: 14px;
+  color: var(--app-text-muted);
+  margin-right: 4px;
+}
+
+.sync-btn.is-loading {
+  animation: spin 1s linear infinite;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .resolution-select option,
-.site-select option {
+.site-select option,
+.time-select option {
   background: var(--app-surface);
   color: var(--app-text);
 }

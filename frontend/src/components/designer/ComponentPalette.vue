@@ -6,9 +6,10 @@ import {
   iconUpload,
   iconChart,
   iconSpeedometer,
-  iconBox,
+  iconToolText,
 } from '@sit-onyx/icons'
 import { useDesigner } from '@/composables/useDesigner'
+import { getWidgetsByCategory, type WidgetManifest } from '@/components/widgets/registry'
 import type { ComponentType } from '@/types/dashboard'
 
 const emit = defineEmits<{
@@ -17,56 +18,32 @@ const emit = defineEmits<{
 }>()
 
 const { addComponent } = useDesigner()
-function handleAddGauge() {
-  addComponent('gauge', {
-    title: 'Extruder Temp',
-    min: 0,
-    max: 120,
-    unit: '°C',
-    value: 87.9,
-    dataPoint: 'ns=2;s=Extruder1.Temperature',
-  })
+
+function handleAddWidget(manifest: WidgetManifest) {
+  addComponent(manifest.type as ComponentType)
 }
 
-function handleAddChart() {
-  addComponent('chart', {
-    title: 'Temperature Trend',
-    timeWindowMinutes: 30,
-    dataPoint: 'ns=2;s=Extruder1.Temperature',
-  })
-}
-
-function handleAddSilo() {
-  addComponent('silo', {
-    title: 'Granulate Silo A',
-    capacity: 1000,
-    value: 650,
-    unit: 'kg',
-    dataPoint: 'ns=2;s=Extruder1.SiloLevel',
-  })
-}
-
-const dashboardWidgets = [
+const categories = [
   {
-    type: 'gauge' as ComponentType,
-    title: 'Circular Gauge',
-    desc: 'Radial metric dial for temperatures & speeds',
+    id: 'indicator',
+    title: 'Industrial Indicators',
+    desc: 'Gauges, status towers & live metrics',
     icon: iconSpeedometer,
-    action: handleAddGauge,
+    widgets: getWidgetsByCategory('indicator'),
   },
   {
-    type: 'chart' as ComponentType,
-    title: 'Trend Chart',
-    desc: 'Live and historical time-series graph',
+    id: 'chart',
+    title: 'Charts & Telemetry',
+    desc: 'Historical trends & throughput graphs',
     icon: iconChart,
-    action: handleAddChart,
+    widgets: getWidgetsByCategory('chart'),
   },
   {
-    type: 'silo' as ComponentType,
-    title: 'Silo / Tank Level',
-    desc: 'Vertical container filling level',
-    icon: iconBox,
-    action: handleAddSilo,
+    id: 'annotation',
+    title: 'Annotations & Labels',
+    desc: 'Text badges & machine zone labels',
+    icon: iconToolText,
+    widgets: getWidgetsByCategory('annotation'),
   },
 ]
 </script>
@@ -107,31 +84,34 @@ const dashboardWidgets = [
               <span class="btn-desc">Save to Model Library</span>
             </div>
           </button>
-
         </div>
       </section>
 
-      <!-- 2. CONTAINER: Dashboard Components -->
-      <section class="category-container">
+      <!-- 2. CONTAINER: Categorized Dynamic Widgets from Registry -->
+      <section
+        v-for="cat in categories"
+        :key="cat.id"
+        class="category-container"
+      >
         <div class="category-header">
-          <OnyxIcon :icon="iconChart" class="category-icon" />
+          <OnyxIcon :icon="cat.icon" class="category-icon" />
           <div class="category-meta">
-            <span class="category-title">Dashboard Components</span>
-            <span class="category-desc">Sensors, charts & indicators</span>
+            <span class="category-title">{{ cat.title }}</span>
+            <span class="category-desc">{{ cat.desc }}</span>
           </div>
         </div>
 
         <div class="category-content">
           <div
-            v-for="item in dashboardWidgets"
+            v-for="item in cat.widgets"
             :key="item.type"
             class="palette-card"
-            @click="item.action"
+            @click="handleAddWidget(item)"
           >
             <OnyxIcon :icon="item.icon" class="card-icon" />
             <div class="card-info">
-              <div class="card-title">{{ item.title }}</div>
-              <div class="card-desc">{{ item.desc }}</div>
+              <div class="card-title">{{ item.name }}</div>
+              <div class="card-desc">{{ item.description }}</div>
             </div>
           </div>
         </div>
