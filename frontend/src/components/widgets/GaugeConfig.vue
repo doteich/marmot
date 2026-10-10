@@ -129,32 +129,41 @@ function updateProp(key: string, value: unknown) {
     <div class="section-card">
       <div class="section-title">Card Background</div>
 
-      <div class="grid-2x2">
-        <div class="field-item">
-          <label>Style</label>
-          <select
-            :value="component.props.backgroundColor === 'transparent' ? 'transparent' : component.props.backgroundColor ? 'custom' : 'surface'"
-            class="inspector-select"
-            @change="(e) => {
-              const val = (e.target as HTMLSelectElement).value
-              if (val === 'surface') updateProp('backgroundColor', '')
-              else if (val === 'transparent') updateProp('backgroundColor', 'transparent')
-              else updateProp('backgroundColor', 'rgba(15, 23, 42, 0.75)')
-            }"
-          >
-            <option value="surface">Default Surface (Theme)</option>
-            <option value="transparent">Transparent</option>
-            <option value="custom">Custom Color</option>
-          </select>
-        </div>
+      <div class="form-row">
+        <label>Style</label>
+        <select
+          :value="(!component.props.backgroundColor || ['glass', 'transparent', 'glass-dark', 'glass-light'].includes(component.props.backgroundColor as string)) ? 'glass' : (['solid', 'surface'].includes(component.props.backgroundColor as string) ? 'solid' : 'custom')"
+          class="inspector-select"
+          @change="(e) => {
+            const val = (e.target as HTMLSelectElement).value
+            if (val === 'glass') updateProp('backgroundColor', 'glass')
+            else if (val === 'solid') updateProp('backgroundColor', 'solid')
+            else updateProp('backgroundColor', '#1e293b')
+          }"
+        >
+          <option value="glass">Glass (Theme)</option>
+          <option value="solid">Solid (Theme)</option>
+          <option value="custom">Custom Color</option>
+        </select>
+      </div>
 
-        <div class="field-item" v-if="component.props.backgroundColor && component.props.backgroundColor !== 'transparent'">
-          <label>Custom Color</label>
+      <div
+        class="form-row"
+        v-if="component.props.backgroundColor && !['glass', 'solid', 'surface', 'transparent', 'glass-dark', 'glass-light'].includes(component.props.backgroundColor as string)"
+      >
+        <label>Custom Color</label>
+        <div class="color-row">
+          <input
+            :value="component.props.backgroundColor"
+            type="color"
+            class="color-picker"
+            @input="updateProp('backgroundColor', ($event.target as HTMLInputElement).value)"
+          />
           <input
             :value="component.props.backgroundColor"
             type="text"
             class="inspector-input"
-            placeholder="e.g. #1e293b"
+            placeholder="#1e293b or rgba(...)"
             @input="updateProp('backgroundColor', ($event.target as HTMLInputElement).value)"
           />
         </div>
@@ -259,5 +268,23 @@ function updateProp(key: string, value: unknown) {
   max-width: 100%;
   box-sizing: border-box;
   cursor: pointer;
+}
+
+.color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.color-picker {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--app-border);
+  border-radius: 4px;
+  cursor: pointer;
+  background: transparent;
+  flex-shrink: 0;
 }
 </style>

@@ -24,9 +24,9 @@ const props = withDefaults(
     text: 'Zone Label',
     fontSize: 14,
     fontWeight: '600',
-    textColor: 'var(--app-text)',
-    backgroundColor: 'var(--app-surface)',
-    borderColor: 'var(--app-border)',
+    textColor: '',
+    backgroundColor: 'glass',
+    borderColor: '',
     borderRadius: 6,
     textAlign: 'center',
     padding: 8,
@@ -62,13 +62,19 @@ const displayedContent = computed(() => {
 
 <template>
   <div
-    class="text-label-widget"
+    class="text-label-widget widget-card"
+    :class="{
+      'widget-solid': backgroundColor === 'solid',
+      'widget-glass': !backgroundColor || backgroundColor === 'glass' || backgroundColor === 'transparent',
+    }"
     :style="{
       fontSize: `${fontSize}px`,
       fontWeight: fontWeight,
-      color: textColor,
-      backgroundColor: backgroundColor,
-      borderColor: borderColor,
+      color: textColor || undefined,
+      background: (backgroundColor && !['glass', 'solid', 'transparent'].includes(backgroundColor))
+        ? backgroundColor
+        : undefined,
+      borderColor: borderColor || undefined,
       borderRadius: `${borderRadius}px`,
       textAlign: textAlign,
       padding: `${padding}px`,

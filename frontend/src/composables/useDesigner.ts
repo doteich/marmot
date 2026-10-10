@@ -1,11 +1,14 @@
 import { reactive, ref, computed } from 'vue'
-import type { DashboardConfig, DashboardComponent, DataPoint, ComponentType, SvgBinding, SiteInfo } from '@/types/dashboard'
+import type { DashboardConfig, DashboardComponent, DataPoint, ComponentType, SvgBinding, CanvasTheme } from '@/types/dashboard'
 import { getWidgetManifest } from '@/components/widgets/registry'
+
+import { useSites } from './useSites'
 
 const defaultDashboard: DashboardConfig = {
   id: 'dash-' + Date.now(),
   name: 'New Line Dashboard',
   siteId: 'factory-edge-01',
+  theme: 'industrial-dark',
   width: 1920,
   height: 1080,
   backgroundColor: '#18181b',
@@ -13,6 +16,8 @@ const defaultDashboard: DashboardConfig = {
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 }
+
+const { sites: availableSites, fetchSites: fetchSitesBase } = useSites()
 
 // Module-level state for designer
 const dashboard = reactive<DashboardConfig>(JSON.parse(JSON.stringify(defaultDashboard)))
@@ -22,7 +27,6 @@ const groupAddingIndex = ref<number | null>(null)
 const zoom = ref(0.7)
 const pan = reactive({ x: 100, y: 60 })
 const availableDataPoints = ref<DataPoint[]>([])
-const availableSites = ref<SiteInfo[]>([])
 const isPickerActive = ref(false)
 const isPreviewMode = ref(false)
 
@@ -187,17 +191,9 @@ export function useDesigner() {
   })
 
   async function fetchSites() {
-    try {
-      const res = await fetch('/api/sites')
-      if (res.ok) {
-        const sites: SiteInfo[] = await res.json()
-        availableSites.value = sites || []
-        if ((!dashboard.siteId || dashboard.siteId === '') && availableSites.value.length > 0) {
-          dashboard.siteId = availableSites.value[0]?.id || 'factory-edge-01'
-        }
-      }
-    } catch (e) {
-      console.warn('Could not fetch sites from backend', e)
+    await fetchSitesBase()
+    if ((!dashboard.siteId || dashboard.siteId === '') && availableSites.value.length > 0) {
+      dashboard.siteId = availableSites.value[0]?.id || 'factory-edge-01'
     }
   }
 
@@ -390,6 +386,26 @@ export function useDesigner() {
     }
   }
 
+  function setCanvasTheme(theme: CanvasTheme) {
+    dashboard.theme = theme
+    if (theme === 'industrial-dark' && dashboard.backgroundColor === '#f8fafc') {
+      dashboard.backgroundColor = '#18181b'
+    } else if (theme === 'cleanroom-light' && dashboard.backgroundColor === '#18181b') {
+      dashboard.backgroundColor = '#f8fafc'
+    }
+  }
+
+  function resetDashboard() {
+    Object.assign(dashboard, JSON.parse(JSON.stringify(defaultDashboard)), {
+      id: 'dash-' + Date.now(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    })
+    selectedComponentId.value = null
+    activeBindingIndex.value = null
+    groupAddingIndex.value = null
+  }
+
   return {
     dashboard,
     selectedComponentId,
@@ -425,6 +441,8 @@ export function useDesigner() {
     fetchDataPoints,
     fetchSites,
     setDashboardSite,
+    setCanvasTheme,
+    resetDashboard,
     exportJson,
     importJson,
   }

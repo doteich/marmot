@@ -22,18 +22,33 @@ function getComponentStyle(c: DashboardComponent) {
 }
 
 onMounted(async () => {
-  // Try loading default or sample dashboard
-  const sampleSvg = await fetch('/sample.svg').then((r) => r.text()).catch(() => '')
-  dashboard.value = {
-    id: String(route.params.id || 'demo'),
-    name: 'Production Line 1 - Live Monitor',
-    siteId: 'factory-edge-01',
-    width: 1920,
-    height: 1080,
-    backgroundColor: '#111827',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    components: [
+  // 1. Try hydrating from localStorage (e.g. from Designer's "Open in Viewer" action)
+  const savedLocal = localStorage.getItem('marmot-active-dashboard')
+  if (savedLocal) {
+    try {
+      const parsed = JSON.parse(savedLocal)
+      if (parsed && (!route.params.id || parsed.id === route.params.id || route.params.id === 'current' || route.params.id === 'demo')) {
+        dashboard.value = parsed
+      }
+    } catch (e) {
+      console.warn('Could not parse localStorage dashboard', e)
+    }
+  }
+
+  // 2. If no matching saved dashboard, fallback to built-in sample dashboard
+  if (!dashboard.value) {
+    const sampleSvg = await fetch('/sample.svg').then((r) => r.text()).catch(() => '')
+    dashboard.value = {
+      id: String(route.params.id || 'demo'),
+      name: 'Production Line 1 - Live Monitor',
+      siteId: 'factory-edge-01',
+      theme: 'industrial-dark',
+      width: 1920,
+      height: 1080,
+      backgroundColor: '#18181b',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      components: [
       {
         id: 'machine-1',
         type: 'svg-machine',
@@ -90,6 +105,7 @@ onMounted(async () => {
       },
     ],
   }
+}
 
   // Resolve target WebSocket URL from site registry
   let targetWsUrl: string | undefined
@@ -125,6 +141,7 @@ onMounted(async () => {
     <div v-if="dashboard" class="viewer-viewport">
       <div
         class="viewer-artboard"
+        :data-canvas-theme="dashboard.theme || 'industrial-dark'"
         :style="{
           width: `${dashboard.width}px`,
           height: `${dashboard.height}px`,

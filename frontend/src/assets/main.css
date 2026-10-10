@@ -1,0 +1,232 @@
+/* ==========================================================================
+   Marmot Global Design Tokens & Theme Stylesheet
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Light Theme Tokens
+   -------------------------------------------------------------------------- */
+:root {
+  /* Surfaces & Layout */
+  --app-bg: #f8fafc;
+  --app-surface: #ffffff;
+  --app-surface-hover: #f1f5f9;
+  --app-surface-subtle: #f8fafc;
+
+  /* Borders */
+  --app-border: #e2e8f0;
+  --app-border-strong: #cbd5e1;
+
+  /* Typography */
+  --app-text: #0f172a;
+  --app-text-muted: #64748b;
+
+  /* Form Controls */
+  --app-input-bg: #ffffff;
+  --app-input-border: #cbd5e1;
+
+  /* Canvas Environment */
+  --canvas-bg: #f1f5f9;
+  --canvas-dots: rgba(0, 0, 0, 0.12);
+
+  /* Primary Accent Colors */
+  --app-accent: #0284c7;
+  --app-accent-hover: #0369a1;
+
+  /* Frosted Glass Parameters (Light Mode) */
+  --app-glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(241, 245, 249, 0.88) 100%);
+  --app-glass-border: rgba(15, 23, 42, 0.22);
+  --app-glass-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(15, 23, 42, 0.08), inset 0 1px 1px 0 rgba(255, 255, 255, 0.95);
+  --app-glass-backdrop: blur(16px) saturate(160%);
+}
+
+/* --------------------------------------------------------------------------
+   Dark Theme Tokens
+   -------------------------------------------------------------------------- */
+:root.dark,
+html.dark {
+  /* Surfaces & Layout */
+  --app-bg: #09090b;
+  --app-surface: #18181b;
+  --app-surface-hover: #27272a;
+  --app-surface-subtle: #121215;
+
+  /* Borders */
+  --app-border: #27272a;
+  --app-border-strong: #3f3f46;
+
+  /* Typography */
+  --app-text: #f4f4f5;
+  --app-text-muted: #a1a1aa;
+
+  /* Form Controls */
+  --app-input-bg: #18181b;
+  --app-input-border: #3f3f46;
+
+  /* Canvas Environment */
+  --canvas-bg: #09090b;
+  --canvas-dots: rgba(255, 255, 255, 0.1);
+
+  /* Primary Accent Colors */
+  --app-accent: #0284c7;
+  --app-accent-hover: #38bdf8;
+
+  /* Frosted Glass Parameters (Dark Mode) */
+  --app-glass-bg: linear-gradient(135deg, rgba(39, 39, 45, 0.90) 0%, rgba(18, 18, 22, 0.95) 100%);
+  --app-glass-border: rgba(255, 255, 255, 0.22);
+  --app-glass-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 1px 1px 0 rgba(255, 255, 255, 0.25);
+  --app-glass-backdrop: blur(16px) saturate(160%);
+}
+
+/* --------------------------------------------------------------------------
+   Frosted Glass Utility Classes
+   -------------------------------------------------------------------------- */
+
+/* Auto Glass (Adapts to Light / Dark Theme) */
+.glass-widget {
+  background: var(--app-glass-bg) !important;
+  border: 1px solid var(--app-glass-border) !important;
+  box-shadow: var(--app-glass-shadow) !important;
+  backdrop-filter: var(--app-glass-backdrop) !important;
+  -webkit-backdrop-filter: var(--app-glass-backdrop) !important;
+}
+
+/* Explicit Dark Smoke Glass (Always dark regardless of theme) */
+.glass-dark {
+  background: linear-gradient(135deg, rgba(46, 46, 56, 0.9) 0%, rgba(46, 46, 47, 0.95) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 1px 1px 0 rgba(255, 255, 255, 0.25) !important;
+  backdrop-filter: blur(16px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+  color: #f4f4f5 !important;
+}
+
+/* Explicit Light Frost Glass (Always light regardless of theme) */
+.glass-light {
+  background: linear-gradient(135deg, rgba(210, 209, 209, 0.92) 0%, rgba(199, 198, 198, 0.88) 100%) !important;
+  border: 1px solid rgba(15, 23, 42, 0.20) !important;
+  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(15, 23, 42, 0.08), inset 0 1px 1px 0 rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(16px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+  color: #0f172a !important;
+}
+
+/* --------------------------------------------------------------------------
+   Canvas Document Themes (Independent from Website Dark/Light Mode)
+   -------------------------------------------------------------------------- */
+
+/* Default Canvas Artboard Tokens */
+.canvas-artboard,
+.viewer-artboard {
+  --canvas-theme-surface: #18181b;
+  --canvas-theme-surface-subtle: #121215;
+  --canvas-theme-border: #27272a;
+  --canvas-theme-border-strong: #3f3f46;
+  --canvas-theme-text: #f4f4f5;
+  --canvas-theme-text-muted: #a1a1aa;
+  --canvas-theme-glass-bg: linear-gradient(135deg, rgba(39, 39, 45, 0.90) 0%, rgba(18, 18, 22, 0.95) 100%);
+  --canvas-theme-glass-border: rgba(255, 255, 255, 0.22);
+  --canvas-theme-glass-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 1px 1px 0 rgba(255, 255, 255, 0.25);
+  --canvas-theme-chart-grid: rgba(51, 65, 85, 0.45);
+  --canvas-theme-chart-text: #94a3b8;
+  color: var(--canvas-theme-text);
+}
+
+/* Industrial Dark Theme */
+.canvas-artboard[data-canvas-theme="industrial-dark"],
+.viewer-artboard[data-canvas-theme="industrial-dark"] {
+  --canvas-theme-surface: #18181b;
+  --canvas-theme-surface-subtle: #121215;
+  --canvas-theme-border: #27272a;
+  --canvas-theme-border-strong: #3f3f46;
+  --canvas-theme-text: #f4f4f5;
+  --canvas-theme-text-muted: #a1a1aa;
+  --canvas-theme-glass-bg: linear-gradient(135deg, rgba(39, 39, 45, 0.90) 0%, rgba(18, 18, 22, 0.95) 100%);
+  --canvas-theme-glass-border: rgba(255, 255, 255, 0.22);
+  --canvas-theme-glass-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 1px 1px 0 rgba(255, 255, 255, 0.25);
+  --canvas-theme-chart-grid: rgba(51, 65, 85, 0.45);
+  --canvas-theme-chart-text: #94a3b8;
+}
+
+/* Cleanroom Light Theme */
+.canvas-artboard[data-canvas-theme="cleanroom-light"],
+.viewer-artboard[data-canvas-theme="cleanroom-light"] {
+  --canvas-theme-surface: #ffffff;
+  --canvas-theme-surface-subtle: #f8fafc;
+  --canvas-theme-border: #e2e8f0;
+  --canvas-theme-border-strong: #cbd5e1;
+  --canvas-theme-text: #0f172a;
+  --canvas-theme-text-muted: #64748b;
+  --canvas-theme-glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(241, 245, 249, 0.88) 100%);
+  --canvas-theme-glass-border: rgba(15, 23, 42, 0.22);
+  --canvas-theme-glass-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(15, 23, 42, 0.08), inset 0 1px 1px 0 rgba(255, 255, 255, 0.95);
+  --canvas-theme-chart-grid: rgba(226, 232, 240, 0.8);
+  --canvas-theme-chart-text: #64748b;
+}
+
+/* --------------------------------------------------------------------------
+   Widget Core Theme Styles (Zero JS if/else, purely CSS token-driven)
+   -------------------------------------------------------------------------- */
+
+/* Common base for all card widgets */
+.widget-card,
+.canvas-artboard .gauge-card,
+.canvas-artboard .bar-chart-card,
+.canvas-artboard .trend-chart-card,
+.canvas-artboard .traffic-light-card,
+.canvas-artboard .text-label-widget,
+.viewer-artboard .gauge-card,
+.viewer-artboard .bar-chart-card,
+.viewer-artboard .trend-chart-card,
+.viewer-artboard .traffic-light-card,
+.viewer-artboard .text-label-widget {
+  color: var(--canvas-theme-text);
+  box-sizing: border-box;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* 1. Theme-Driven Glass (Default) */
+.widget-glass,
+.glass-widget {
+  background: var(--canvas-theme-glass-bg) !important;
+  border: 1px solid var(--canvas-theme-glass-border) !important;
+  box-shadow: var(--canvas-theme-glass-shadow) !important;
+  backdrop-filter: blur(16px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+  color: var(--canvas-theme-text) !important;
+}
+
+/* 2. Theme-Driven Solid */
+.widget-solid {
+  background: var(--canvas-theme-surface) !important;
+  border: 1px solid var(--canvas-theme-border) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.10) !important;
+  color: var(--canvas-theme-text) !important;
+}
+
+/* --------------------------------------------------------------------------
+   Global Layout & Font Consistency
+   -------------------------------------------------------------------------- */
+html,
+body,
+#app {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--app-bg);
+  color: var(--app-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Enforce font family across all HTML controls */
+button,
+input,
+select,
+textarea,
+optgroup {
+  font-family: inherit;
+}

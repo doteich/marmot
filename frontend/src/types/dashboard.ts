@@ -89,11 +89,14 @@ export interface DashboardComponent {
   }
 }
 
+export type CanvasTheme = 'industrial-dark' | 'cleanroom-light'
+
 export interface DashboardConfig {
   id: string
   name: string
   siteId?: string
   description?: string
+  theme?: CanvasTheme
   width: number
   height: number
   backgroundColor: string

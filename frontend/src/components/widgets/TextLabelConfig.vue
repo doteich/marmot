@@ -36,8 +36,9 @@ function updateProp(key: string, value: unknown) {
 }
 
 const colorPresets = [
+  { label: 'Glass (Theme)', bg: 'glass', text: '', border: '' },
+  { label: 'Solid (Theme)', bg: 'solid', text: '', border: '' },
   { label: 'Dark Slate', bg: 'rgba(30, 41, 59, 0.85)', text: '#f8fafc', border: '#475569' },
-  { label: 'Transparent', bg: 'transparent', text: '#f8fafc', border: 'transparent' },
   { label: 'Blue Header', bg: 'rgba(2, 132, 199, 0.15)', text: '#38bdf8', border: '#0284c7' },
   { label: 'Emerald Good', bg: 'rgba(16, 185, 129, 0.15)', text: '#34d399', border: '#059669' },
   { label: 'Amber Alert', bg: 'rgba(245, 158, 11, 0.15)', text: '#fbbf24', border: '#d97706' },
@@ -174,36 +175,78 @@ function applyPreset(preset: typeof colorPresets[0]) {
 
     <!-- Style presets -->
     <div class="section-card">
-      <div class="section-title">Visual Presets</div>
+      <div class="section-title">Background & Colors</div>
       <div class="presets-grid">
         <button
           v-for="p in colorPresets"
           :key="p.label"
           class="preset-badge-btn"
-          :style="{ background: p.bg, color: p.text, borderColor: p.border }"
+          :style="{
+            background: p.bg === 'glass' ? 'rgba(255, 255, 255, 0.08)' : (p.bg === 'solid' ? 'var(--app-surface-hover)' : p.bg),
+            color: p.text || 'var(--app-text)',
+            borderColor: p.border || 'var(--app-border)'
+          }"
           @click="applyPreset(p)"
         >
           {{ p.label }}
         </button>
       </div>
 
-      <div class="grid-2x2">
-        <div class="field-item">
-          <label>Text Color</label>
+      <div class="form-row">
+        <label>Background Style</label>
+        <select
+          :value="(!component.props.backgroundColor || ['glass', 'transparent', 'glass-dark', 'glass-light'].includes(component.props.backgroundColor as string)) ? 'glass' : (['solid', 'surface'].includes(component.props.backgroundColor as string) ? 'solid' : 'custom')"
+          class="inspector-select"
+          @change="(e) => {
+            const val = (e.target as HTMLSelectElement).value
+            if (val === 'glass') updateProp('backgroundColor', 'glass')
+            else if (val === 'solid') updateProp('backgroundColor', 'solid')
+            else updateProp('backgroundColor', '#1e293b')
+          }"
+        >
+          <option value="glass">Glass (Theme)</option>
+          <option value="solid">Solid (Theme)</option>
+          <option value="custom">Custom Color</option>
+        </select>
+      </div>
+
+      <div
+        class="form-row"
+        v-if="component.props.backgroundColor && !['glass', 'solid', 'surface', 'transparent', 'glass-dark', 'glass-light'].includes(component.props.backgroundColor as string)"
+      >
+        <label>Custom Background Color</label>
+        <div class="color-row">
           <input
-            :value="component.props.textColor ?? '#f8fafc'"
+            :value="component.props.backgroundColor"
+            type="color"
+            class="color-picker"
+            @input="updateProp('backgroundColor', ($event.target as HTMLInputElement).value)"
+          />
+          <input
+            :value="component.props.backgroundColor"
             type="text"
             class="inspector-input"
-            @input="updateProp('textColor', ($event.target as HTMLInputElement).value)"
+            placeholder="#1e293b or rgba(...)"
+            @input="updateProp('backgroundColor', ($event.target as HTMLInputElement).value)"
           />
         </div>
-        <div class="field-item">
-          <label>Background</label>
+      </div>
+
+      <div class="form-row">
+        <label>Text Color</label>
+        <div class="color-row">
           <input
-            :value="component.props.backgroundColor ?? 'rgba(30, 41, 59, 0.85)'"
+            :value="component.props.textColor || '#f8fafc'"
+            type="color"
+            class="color-picker"
+            @input="updateProp('textColor', ($event.target as HTMLInputElement).value)"
+          />
+          <input
+            :value="component.props.textColor || ''"
             type="text"
             class="inspector-input"
-            @input="updateProp('backgroundColor', ($event.target as HTMLInputElement).value)"
+            placeholder="Default (Theme Text)"
+            @input="updateProp('textColor', ($event.target as HTMLInputElement).value)"
           />
         </div>
       </div>
@@ -309,5 +352,23 @@ function applyPreset(preset: typeof colorPresets[0]) {
 
 .preset-badge-btn:hover {
   transform: translateY(-1px);
+}
+
+.color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.color-picker {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--app-border);
+  border-radius: 4px;
+  cursor: pointer;
+  background: transparent;
+  flex-shrink: 0;
 }
 </style>

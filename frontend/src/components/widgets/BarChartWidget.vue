@@ -146,7 +146,7 @@ const totalValue = computed(() => {
 })
 
 function buildChartConfig(): ChartConfiguration {
-  const theme = getChartThemeColors()
+  const theme = getChartThemeColors(containerRef.value)
   const data = bucketedData.value
   const labels = data.map((b) => b.label)
   const values = data.map((b) => b.value)
@@ -264,7 +264,7 @@ function updateChartData() {
     return
   }
 
-  const theme = getChartThemeColors()
+  const theme = getChartThemeColors(containerRef.value)
   const data = bucketedData.value
   const labels = data.map((b) => b.label)
   const values = data.map((b) => b.value)
@@ -348,10 +348,16 @@ onBeforeUnmount(() => {
 <template>
   <div
     ref="containerRef"
-    class="bar-chart-card"
+    class="bar-chart-card widget-card"
+    :class="{
+      'widget-solid': backgroundColor === 'solid',
+      'widget-glass': !backgroundColor || backgroundColor === 'glass' || backgroundColor === 'transparent',
+    }"
     :style="{
-      backgroundColor: backgroundColor || 'var(--app-surface)',
-      borderColor: borderColor || 'var(--app-border)',
+      background: (backgroundColor && !['glass', 'solid', 'transparent'].includes(backgroundColor))
+        ? backgroundColor
+        : undefined,
+      borderColor: borderColor || undefined,
     }"
   >
     <!-- Header -->
@@ -406,7 +412,7 @@ onBeforeUnmount(() => {
   flex-direction: column;
   padding: 10px 14px;
   box-sizing: border-box;
-  color: var(--app-text);
+  color: var(--canvas-theme-text, #f4f4f5);
   overflow: hidden;
   user-select: none;
   transition: background-color 0.15s ease, border-color 0.15s ease;
@@ -430,7 +436,7 @@ onBeforeUnmount(() => {
 .chart-title {
   font-size: 13px;
   font-weight: 700;
-  color: var(--app-text);
+  color: var(--canvas-theme-text, #f4f4f5);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   white-space: nowrap;
@@ -440,7 +446,7 @@ onBeforeUnmount(() => {
 
 .chart-tag {
   font-size: 11px;
-  color: var(--app-text-muted);
+  color: var(--canvas-theme-text-muted, #a1a1aa);
   white-space: nowrap;
 }
 
@@ -459,25 +465,25 @@ onBeforeUnmount(() => {
 
 .readout-label {
   font-size: 10px;
-  color: var(--app-text-muted);
+  color: var(--canvas-theme-text-muted, #a1a1aa);
   text-transform: uppercase;
 }
 
 .readout-val {
   font-size: 15px;
   font-weight: 700;
-  color: var(--app-text);
+  color: var(--canvas-theme-text, #f4f4f5);
 }
 
 .readout-unit {
   font-size: 11px;
   font-weight: 500;
-  color: var(--app-text-muted);
+  color: var(--canvas-theme-text-muted, #a1a1aa);
 }
 
 .readout-empty {
   font-size: 13px;
-  color: var(--app-text-muted);
+  color: var(--canvas-theme-text-muted, #a1a1aa);
 }
 
 .sync-indicator {

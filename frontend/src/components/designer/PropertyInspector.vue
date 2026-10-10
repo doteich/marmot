@@ -14,6 +14,7 @@ const {
   sendToBack,
   bringForward,
   sendBackward,
+  setCanvasTheme,
 } = useDesigner()
 
 const activeConfigComponent = computed(() => {
@@ -164,7 +165,18 @@ function handleDeleteComponent() {
       <div class="section-card">
         <div class="section-title">Appearance</div>
         <div class="form-row">
-          <label>Background Color</label>
+          <label>Canvas Theme</label>
+          <select
+            :value="dashboard.theme || 'industrial-dark'"
+            class="inspector-input select-input"
+            @change="setCanvasTheme(($event.target as HTMLSelectElement).value as any)"
+          >
+            <option value="industrial-dark">Industrial Dark</option>
+            <option value="cleanroom-light">Cleanroom Light</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Background Color Override</label>
           <div class="color-row">
             <input v-model="dashboard.backgroundColor" type="color" class="color-picker" />
             <input v-model="dashboard.backgroundColor" class="inspector-input text-input" />

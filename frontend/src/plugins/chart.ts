@@ -13,21 +13,48 @@ if (typeof window !== 'undefined') {
 }
 
 /**
- * Returns current CSS color tokens for Chart.js rendering based on theme
+ * Returns current CSS color tokens for Chart.js rendering based on theme.
+ * Dynamically queries CSS custom properties from the canvas/viewer artboard
+ * so any present or future theme is automatically supported without JS if/else branches.
  */
-export function getChartThemeColors() {
-  const isDark = document.documentElement.classList.contains('dark') ||
-    document.body.classList.contains('dark') ||
-    window.matchMedia('(prefers-color-scheme: dark)').matches
+export function getChartThemeColors(targetElement?: HTMLElement | null) {
+  if (typeof window !== 'undefined') {
+    const target =
+      targetElement ||
+      (document.querySelector('.canvas-artboard, .viewer-artboard') as HTMLElement | null)
 
+    if (target) {
+      const style = window.getComputedStyle(target)
+      const chartText = style.getPropertyValue('--canvas-theme-chart-text').trim()
+      const chartMain = style.getPropertyValue('--canvas-theme-text').trim()
+      const chartGrid = style.getPropertyValue('--canvas-theme-chart-grid').trim()
+      const chartBorder = style.getPropertyValue('--canvas-theme-border').trim()
+      const surface = style.getPropertyValue('--canvas-theme-surface').trim()
+      const isLight = surface === '#ffffff' || surface === 'rgb(255, 255, 255)'
+
+      if (chartText && chartGrid) {
+        return {
+          textColor: chartText,
+          textMain: chartMain || (isLight ? '#0f172a' : '#f8fafc'),
+          gridColor: chartGrid,
+          borderColor: chartBorder || (isLight ? '#cbd5e1' : '#334155'),
+          tooltipBg: isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(15, 23, 42, 0.95)',
+          tooltipText: isLight ? '#0f172a' : '#f8fafc',
+          tooltipBorder: isLight ? '#cbd5e1' : '#475569',
+        }
+      }
+    }
+  }
+
+  // Universal Fallback defaults
   return {
-    textColor: isDark ? '#94a3b8' : '#64748b',
-    textMain: isDark ? '#f8fafc' : '#0f172a',
-    gridColor: isDark ? 'rgba(51, 65, 85, 0.45)' : 'rgba(226, 232, 240, 0.8)',
-    borderColor: isDark ? '#334155' : '#cbd5e1',
-    tooltipBg: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-    tooltipText: isDark ? '#f8fafc' : '#0f172a',
-    tooltipBorder: isDark ? '#475569' : '#cbd5e1',
+    textColor: '#94a3b8',
+    textMain: '#f8fafc',
+    gridColor: 'rgba(51, 65, 85, 0.45)',
+    borderColor: '#334155',
+    tooltipBg: 'rgba(15, 23, 42, 0.95)',
+    tooltipText: '#f8fafc',
+    tooltipBorder: '#475569',
   }
 }
 

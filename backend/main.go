@@ -113,8 +113,10 @@ func main() {
 
 	// Register Site Management Endpoints
 	router.Get("/api/sites", ListSitesHandler)
+	router.Post("/api/sites", CreateSiteHandler)
 	router.Get("/api/sites/{id}", GetSiteHandler)
 	router.Put("/api/sites/{id}", UpdateSiteHandler)
+	router.Delete("/api/sites/{id}", DeleteSiteHandler)
 
 	// Register Historical Telemetry Query Endpoint
 	router.Get("/api/telemetry/history", GetTelemetryHistoryHandler)

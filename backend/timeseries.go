@@ -140,6 +140,78 @@ func UpdateSiteHandler(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(map[string]any{"status": "ok", "siteId": siteId})
 }
 
+// CreateSiteHandler registers a new site in the database
+func CreateSiteHandler(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Id          string `json:"id"`
+		Name        string `json:"name"`
+		Description string `json:"description"`
+		WsUrl       string `json:"wsUrl"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid payload", http.StatusBadRequest)
+		return
+	}
+	if req.Id == "" || req.Name == "" {
+		http.Error(w, "Site ID and Name are required", http.StatusBadRequest)
+		return
+	}
+	if req.WsUrl == "" {
+		req.WsUrl = "ws://localhost:9002"
+	}
+
+	ctx := r.Context()
+	sql := `
+	INSERT INTO sites (id, name, description, ws_url, status, created_at, last_seen_at)
+	VALUES ($1, $2, $3, $4, 'online', NOW(), NOW())
+	ON CONFLICT (id) DO UPDATE SET
+		name = EXCLUDED.name,
+		description = EXCLUDED.description,
+		ws_url = EXCLUDED.ws_url
+	RETURNING id, name, COALESCE(description, ''), ws_url, status, last_seen_at, created_at
+	`
+	var s Site
+	err := Conn.QueryRow(ctx, sql, req.Id, req.Name, req.Description, req.WsUrl).Scan(
+		&s.Id, &s.Name, &s.Description, &s.WsUrl, &s.Status, &s.LastSeenAt, &s.CreatedAt,
+	)
+	if err != nil {
+		http.Error(w, "Failed to create site: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	_ = json.NewEncoder(w).Encode(s)
+}
+
+// DeleteSiteHandler removes a site and cleans up associated edge datapoints
+func DeleteSiteHandler(w http.ResponseWriter, r *http.Request) {
+	siteId := chi.URLParam(r, "id")
+	if siteId == "" {
+		http.Error(w, "Site ID required", http.StatusBadRequest)
+		return
+	}
+
+	ctx := r.Context()
+	// Clean up edge_datapoints associated with this site
+	_, _ = Conn.Exec(ctx, `DELETE FROM edge_datapoints WHERE site_id = $1`, siteId)
+
+	sql := `DELETE FROM sites WHERE id = $1`
+	res, err := Conn.Exec(ctx, sql, siteId)
+	if err != nil {
+		http.Error(w, "Failed to delete site: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if res.RowsAffected() == 0 {
+		http.Error(w, "Site not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]any{"status": "deleted", "siteId": siteId})
+}
+
 // SyncEdgeDatapointsHandler receives distinct datapoints pushed from marmot-edge
 func SyncEdgeDatapointsHandler(w http.ResponseWriter, r *http.Request) {
 	var payload models.SyncDatapointsPayload

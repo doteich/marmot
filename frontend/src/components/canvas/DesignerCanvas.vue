@@ -135,6 +135,7 @@ function onRotate(e: MoveableRotateEvent) {
     <div
       ref="artboardRef"
       class="canvas-artboard"
+      :data-canvas-theme="dashboard.theme || 'industrial-dark'"
       :style="{
         width: `${dashboard.width}px`,
         height: `${dashboard.height}px`,

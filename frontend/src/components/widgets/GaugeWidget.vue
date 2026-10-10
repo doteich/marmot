@@ -56,10 +56,16 @@ const strokeDashoffset = computed(() => {
 
 <template>
   <div
-    class="gauge-card"
+    class="gauge-card widget-card"
+    :class="{
+      'widget-solid': backgroundColor === 'solid',
+      'widget-glass': !backgroundColor || backgroundColor === 'glass' || backgroundColor === 'transparent',
+    }"
     :style="{
-      backgroundColor: backgroundColor || 'var(--app-surface)',
-      borderColor: borderColor || 'var(--app-border)',
+      background: (backgroundColor && !['glass', 'solid', 'transparent'].includes(backgroundColor))
+        ? backgroundColor
+        : undefined,
+      borderColor: borderColor || undefined,
     }"
   >
     <div class="gauge-title">{{ title }}</div>
@@ -71,7 +77,7 @@ const strokeDashoffset = computed(() => {
           cy="50"
           r="40"
           fill="none"
-          stroke="var(--app-border)"
+          stroke="var(--canvas-theme-border-strong, #3f3f46)"
           stroke-width="8"
           stroke-dasharray="188.49"
           stroke-dashoffset="62.83"
@@ -118,14 +124,14 @@ const strokeDashoffset = computed(() => {
   justify-content: space-between;
   padding: 12px;
   box-sizing: border-box;
-  color: var(--app-text);
+  color: var(--canvas-theme-text, #f4f4f5);
   transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .gauge-title {
   font-size: 13px;
   font-weight: 600;
-  color: var(--app-text-muted);
+  color: var(--canvas-theme-text-muted, #a1a1aa);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -159,13 +165,13 @@ const strokeDashoffset = computed(() => {
 .gauge-val {
   font-size: 22px;
   font-weight: 700;
-  color: var(--app-text);
+  color: var(--canvas-theme-text, #f4f4f5);
   line-height: 1;
 }
 
 .gauge-unit {
   font-size: 11px;
-  color: var(--app-text-muted);
+  color: var(--canvas-theme-text-muted, #a1a1aa);
   margin-top: 2px;
 }
 
@@ -174,6 +180,6 @@ const strokeDashoffset = computed(() => {
   display: flex;
   justify-content: space-between;
   font-size: 11px;
-  color: var(--app-text-muted);
+  color: var(--canvas-theme-text-muted, #a1a1aa);
 }
 </style>

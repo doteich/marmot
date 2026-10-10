@@ -109,11 +109,19 @@ const lights = [
 
 <template>
   <div
-    class="traffic-light-card"
-    :class="[orientation]"
+    class="traffic-light-card widget-card"
+    :class="[
+      orientation,
+      {
+        'widget-solid': backgroundColor === 'solid',
+        'widget-glass': !backgroundColor || backgroundColor === 'glass' || backgroundColor === 'transparent',
+      },
+    ]"
     :style="{
-      backgroundColor: backgroundColor || 'var(--app-surface)',
-      borderColor: borderColor || 'var(--app-border)',
+      background: (backgroundColor && !['glass', 'solid', 'transparent'].includes(backgroundColor))
+        ? backgroundColor
+        : undefined,
+      borderColor: borderColor || undefined,
     }"
   >
     <div v-if="title" class="light-title">{{ title }}</div>
@@ -167,7 +175,7 @@ const lights = [
   justify-content: center;
   padding: 10px;
   box-sizing: border-box;
-  color: var(--app-text);
+  color: var(--canvas-theme-text, #f4f4f5);
   user-select: none;
   overflow: hidden;
   transition: background-color 0.15s ease, border-color 0.15s ease;
@@ -180,7 +188,7 @@ const lights = [
 .light-title {
   font-size: 11px;
   font-weight: 700;
-  color: var(--app-text-muted);
+  color: var(--canvas-theme-text-muted, #a1a1aa);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 6px;
