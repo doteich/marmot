@@ -211,7 +211,7 @@ func GetTelemetryHistoryHandler(w http.ResponseWriter, r *http.Request) {
 			valExpr = "val_num"
 			aggResponse = ""
 		} else {
-			valExpr = "AVG(val_num)"
+			valExpr = "MAX(val_num)"
 			aggResponse = ""
 		}
 	}
@@ -283,16 +283,15 @@ func GetTelemetryHistoryHandler(w http.ResponseWriter, r *http.Request) {
 						Time:  bTime.UTC(),
 						Value: val.Float64,
 					}
-					// Only attach Count, Min, Max when multiple points were aggregated
-					// so they represent real statistical downsampling rather than echoing Value
+					// Attach Count, Min, Max when multiple points were aggregated
 					if countVal.Valid && countVal.Int64 > 1 {
 						c := countVal.Int64
 						pt.Count = &c
-						if minVal.Valid && minVal.Float64 != val.Float64 {
+						if minVal.Valid {
 							minF := minVal.Float64
 							pt.Min = &minF
 						}
-						if maxVal.Valid && maxVal.Float64 != val.Float64 {
+						if maxVal.Valid {
 							maxF := maxVal.Float64
 							pt.Max = &maxF
 						}

@@ -97,32 +97,59 @@ const bucketedData = computed<BucketData[]>(() => {
   const result: BucketData[] = []
   const sortedBucketKeys = Array.from(bucketsMap.keys()).sort((a, b) => a - b)
 
-  for (const bStart of sortedBucketKeys) {
+  const spansMultipleDays =
+    sortedBucketKeys.length > 1 &&
+    (sortedBucketKeys[sortedBucketKeys.length - 1]! - sortedBucketKeys[0]! > 18 * 3600 * 1000 ||
+      new Date(sortedBucketKeys[0]!).toDateString() !==
+        new Date(sortedBucketKeys[sortedBucketKeys.length - 1]!).toDateString())
+
+  for (let i = 0; i < sortedBucketKeys.length; i++) {
+    const bStart = sortedBucketKeys[i]!
     const pts = bucketsMap.get(bStart)!
     let val = 0
 
     if (mode === 'delta') {
       if (pts.length >= 2) {
-        val = pts[pts.length - 1]!.value - pts[0]!.value
+        const lastVal = pts[pts.length - 1]!.max ?? pts[pts.length - 1]!.value
+        const firstVal = pts[0]!.min ?? pts[0]!.value
+        val = lastVal - firstVal
       } else if (pts.length === 1) {
-        val = pts[0]!.value
+        const p = pts[0]!
+        if (p.max !== undefined && p.min !== undefined && p.count && p.count > 1) {
+          // Pre-aggregated bucket: delta produced during this bucket is max - min
+          val = p.max - p.min
+        } else if (i > 0) {
+          // Single measurement: delta is difference from the previous bar's latest value
+          const prevPts = bucketsMap.get(sortedBucketKeys[i - 1]!)!
+          const prevLast = prevPts[prevPts.length - 1]!
+          const prevVal = prevLast.max ?? prevLast.value
+          val = p.value - prevVal
+        } else {
+          val = p.value
+        }
       }
       // Industrial counters wrap/reset check: clamp negative jumps to zero
       if (val < 0) val = Math.max(0, pts[pts.length - 1]!.value)
     } else if (mode === 'sum') {
       val = pts.reduce((acc, p) => acc + p.value, 0)
     } else if (mode === 'max') {
-      val = Math.max(...pts.map((p) => p.value))
+      val = Math.max(...pts.map((p) => (p.max !== undefined ? p.max : p.value)))
     } else {
       // Average
       val = pts.reduce((acc, p) => acc + p.value, 0) / pts.length
     }
 
     const d = new Date(bStart)
-    const label =
-      intervalMs >= 86400 * 1000
-        ? d.toLocaleDateString([], { month: 'numeric', day: 'numeric' })
-        : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    let label = ''
+    if (intervalMs >= 86400 * 1000) {
+      label = d.toLocaleDateString([], { day: '2-digit', month: '2-digit' })
+    } else if (spansMultipleDays) {
+      const datePart = d.toLocaleDateString([], { day: '2-digit', month: '2-digit' })
+      const timePart = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      label = `${datePart} ${timePart}`
+    } else {
+      label = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }
 
     result.push({
       label,
@@ -206,6 +233,23 @@ function buildChartConfig(): ChartConfiguration {
           borderWidth: 1,
           padding: 8,
           callbacks: {
+            title(items) {
+              const idx = items[0]?.dataIndex
+              if (idx == null) return ''
+              const bucket = bucketedData.value[idx]
+              if (!bucket) return items[0]?.label || ''
+              const d = new Date(bucket.timestamp)
+              const datePart = d.toLocaleDateString([], {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+              })
+              const timePart = d.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+              return `${datePart}, ${timePart}`
+            },
             label(ctx) {
               return `${ctx.dataset.label}: ${ctx.parsed.y} ${activeUnit.value}`
             },

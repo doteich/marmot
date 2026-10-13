@@ -79,6 +79,21 @@ const currentValue = computed<number | null>(() => {
 })
 
 
+const spansAcrossDays = computed(() => {
+  const pts = chartPoints.value
+  const first = pts[0]
+  const last = pts[pts.length - 1]
+  if (!first || !last || pts.length < 2) return false
+  const t0 = new Date(first.time).getTime()
+  const t1 = new Date(last.time).getTime()
+  const minTime = Math.min(t0, t1)
+  const maxTime = Math.max(t0, t1)
+  return (
+    maxTime - minTime > 18 * 3600 * 1000 ||
+    new Date(minTime).toDateString() !== new Date(maxTime).toDateString()
+  )
+})
+
 function buildChartConfig(): ChartConfiguration {
   const theme = getChartThemeColors(containerRef.value)
   const pts = chartPoints.value
@@ -142,7 +157,17 @@ function buildChartConfig(): ChartConfiguration {
               const xVal = items[0]?.parsed?.x
               if (xVal == null) return ''
               const d = new Date(xVal)
-              return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+              const datePart = d.toLocaleDateString([], {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+              })
+              const timePart = d.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+              })
+              return `${datePart}, ${timePart}`
             },
             label(ctx) {
               const val = ctx.parsed?.y != null ? ctx.parsed.y.toFixed(2) : '--'
@@ -154,6 +179,13 @@ function buildChartConfig(): ChartConfiguration {
       scales: {
         x: {
           type: 'time',
+          time: {
+            displayFormats: {
+              minute: spansAcrossDays.value ? 'dd.MM HH:mm' : 'HH:mm',
+              hour: spansAcrossDays.value ? 'dd.MM HH:mm' : 'HH:mm',
+              day: 'dd.MM',
+            },
+          },
           grid: {
             display: false,
           },
@@ -242,6 +274,18 @@ function updateChartData() {
     if (chartInstance.options.scales.y.grid) {
       chartInstance.options.scales.y.grid.display = props.showGrid !== false
       chartInstance.options.scales.y.grid.color = theme.gridColor
+    }
+  }
+
+  // Update X scale time displayFormats dynamically
+  const xScale = chartInstance.options.scales?.x as
+    | { time?: { displayFormats?: Record<string, string> } }
+    | undefined
+  if (xScale?.time) {
+    xScale.time.displayFormats = {
+      minute: spansAcrossDays.value ? 'dd.MM HH:mm' : 'HH:mm',
+      hour: spansAcrossDays.value ? 'dd.MM HH:mm' : 'HH:mm',
+      day: 'dd.MM',
     }
   }
 

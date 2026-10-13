@@ -77,38 +77,7 @@ html.dark {
   --app-glass-backdrop: blur(16px) saturate(160%);
 }
 
-/* --------------------------------------------------------------------------
-   Frosted Glass Utility Classes
-   -------------------------------------------------------------------------- */
 
-/* Auto Glass (Adapts to Light / Dark Theme) */
-.glass-widget {
-  background: var(--app-glass-bg) !important;
-  border: 1px solid var(--app-glass-border) !important;
-  box-shadow: var(--app-glass-shadow) !important;
-  backdrop-filter: var(--app-glass-backdrop) !important;
-  -webkit-backdrop-filter: var(--app-glass-backdrop) !important;
-}
-
-/* Explicit Dark Smoke Glass (Always dark regardless of theme) */
-.glass-dark {
-  background: linear-gradient(135deg, rgba(46, 46, 56, 0.9) 0%, rgba(46, 46, 47, 0.95) 100%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.22) !important;
-  box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 1px 1px 0 rgba(255, 255, 255, 0.25) !important;
-  backdrop-filter: blur(16px) saturate(160%) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
-  color: #f4f4f5 !important;
-}
-
-/* Explicit Light Frost Glass (Always light regardless of theme) */
-.glass-light {
-  background: linear-gradient(135deg, rgba(210, 209, 209, 0.92) 0%, rgba(199, 198, 198, 0.88) 100%) !important;
-  border: 1px solid rgba(15, 23, 42, 0.20) !important;
-  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(15, 23, 42, 0.08), inset 0 1px 1px 0 rgba(255, 255, 255, 0.95) !important;
-  backdrop-filter: blur(16px) saturate(160%) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
-  color: #0f172a !important;
-}
 
 /* --------------------------------------------------------------------------
    Canvas Document Themes (Independent from Website Dark/Light Mode)
@@ -140,9 +109,9 @@ html.dark {
   --canvas-theme-border-strong: #3f3f46;
   --canvas-theme-text: #f4f4f5;
   --canvas-theme-text-muted: #a1a1aa;
-  --canvas-theme-glass-bg: linear-gradient(135deg, rgba(39, 39, 45, 0.90) 0%, rgba(18, 18, 22, 0.95) 100%);
+  --canvas-theme-glass-bg: linear-gradient(135deg, rgba(34, 34, 37, 0.7) 0%, rgba(28, 28, 32, 0.75) 100%);
   --canvas-theme-glass-border: rgba(255, 255, 255, 0.22);
-  --canvas-theme-glass-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 1px 1px 0 rgba(255, 255, 255, 0.25);
+  --canvas-theme-glass-shadow: 0 12px 36px 0 rgba(40, 39, 39, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 1px 1px 0 rgba(255, 255, 255, 0.25);
   --canvas-theme-chart-grid: rgba(51, 65, 85, 0.45);
   --canvas-theme-chart-text: #94a3b8;
 }
@@ -156,7 +125,7 @@ html.dark {
   --canvas-theme-border-strong: #cbd5e1;
   --canvas-theme-text: #0f172a;
   --canvas-theme-text-muted: #64748b;
-  --canvas-theme-glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(241, 245, 249, 0.88) 100%);
+  --canvas-theme-glass-bg: linear-gradient(135deg, rgba(222, 222, 226, 0.62) 0%, rgba(213, 229, 245, 0.78) 100%);
   --canvas-theme-glass-border: rgba(15, 23, 42, 0.22);
   --canvas-theme-glass-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(15, 23, 42, 0.08), inset 0 1px 1px 0 rgba(255, 255, 255, 0.95);
   --canvas-theme-chart-grid: rgba(226, 232, 240, 0.8);
