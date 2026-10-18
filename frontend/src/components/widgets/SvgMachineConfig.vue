@@ -21,6 +21,7 @@ const props = defineProps<{
 
 const {
   availableDataPoints,
+  groupedDataPoints,
   isPickerActive,
   activeBindingIndex,
   groupAddingIndex,
@@ -47,18 +48,7 @@ function getBindingIds(b: SvgBinding): string[] {
   return Array.from(ids)
 }
 
-const groupedDataPoints = computed(() => {
-  const map = new Map<string, typeof availableDataPoints.value>()
-  for (const dp of availableDataPoints.value) {
-    const key = dp.machineId || 'Other'
-    if (!map.has(key)) map.set(key, [])
-    map.get(key)!.push(dp)
-  }
-  return Array.from(map.entries()).map(([machineId, items]) => ({
-    machineId,
-    items,
-  }))
-})
+
 
 interface DetectedShape {
   id: string

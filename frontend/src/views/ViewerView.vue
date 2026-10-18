@@ -1,9 +1,14 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onErrorCaptured } from 'vue'
 import { useRoute } from 'vue-router'
 import { getWidgetComponent } from '@/components/widgets/registry'
 import { useTelemetry } from '@/composables/useTelemetry'
 import type { DashboardConfig, DashboardComponent } from '@/types/dashboard'
+
+onErrorCaptured((err, _instance, info) => {
+  console.error('[Marmot Viewer] Captured widget render error:', err, info)
+  return false
+})
 
 const route = useRoute()
 const dashboard = ref<DashboardConfig | null>(null)

@@ -15,6 +15,8 @@ const {
   bringForward,
   sendBackward,
   setCanvasTheme,
+  availableDataPoints,
+  groupedDataPoints,
 } = useDesigner()
 
 const activeConfigComponent = computed(() => {
@@ -26,6 +28,16 @@ function handleNumberChange(prop: 'x' | 'y' | 'width' | 'height' | 'rotation', v
   if (!selectedComponent.value) return
   updateComponent(selectedComponent.value.id, {
     [prop]: Number(val) || 0,
+  })
+}
+
+function handleUpdateProps(updatedProps: Record<string, unknown>) {
+  if (!selectedComponent.value) return
+  updateComponent(selectedComponent.value.id, {
+    props: {
+      ...selectedComponent.value.props,
+      ...updatedProps,
+    },
   })
 }
 
@@ -133,6 +145,9 @@ function handleDeleteComponent() {
         :is="activeConfigComponent"
         v-if="activeConfigComponent"
         :component="selectedComponent"
+        :data-points="availableDataPoints"
+        :grouped-data-points="groupedDataPoints"
+        @update="handleUpdateProps"
       />
 
       <!-- Delete Component button -->

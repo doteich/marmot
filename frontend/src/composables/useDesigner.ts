@@ -30,6 +30,24 @@ const availableDataPoints = ref<DataPoint[]>([])
 const isPickerActive = ref(false)
 const isPreviewMode = ref(false)
 
+export interface GroupedDataPointCategory {
+  machineId: string
+  items: DataPoint[]
+}
+
+const groupedDataPoints = computed<GroupedDataPointCategory[]>(() => {
+  const map = new Map<string, DataPoint[]>()
+  for (const dp of availableDataPoints.value) {
+    const key = dp.machineId || 'General'
+    if (!map.has(key)) map.set(key, [])
+    map.get(key)!.push(dp)
+  }
+  return Array.from(map.entries()).map(([machineId, items]) => ({
+    machineId,
+    items,
+  }))
+})
+
 export function useDesigner() {
   const selectedComponent = computed(() => {
     if (!selectedComponentId.value) return null
@@ -417,6 +435,7 @@ export function useDesigner() {
     zoom,
     pan,
     availableDataPoints,
+    groupedDataPoints,
     availableSites,
     activeSite,
     isPickerActive,

@@ -92,10 +92,15 @@ func main() {
 		Logger.Warn("could not ensure edge_datapoints table", "error", err)
 	}
 
+	// Initialize extensions table & MinIO bucket
+	if err := InitExtensionsTable(ctx); err != nil {
+		Logger.Warn("could not ensure extensions table", "error", err)
+	}
+
 	router := chi.NewRouter()
 	router.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"https://*", "http://*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: false,
@@ -120,6 +125,13 @@ func main() {
 
 	// Register Historical Telemetry Query Endpoint
 	router.Get("/api/telemetry/history", GetTelemetryHistoryHandler)
+
+	// Register Extension Endpoints
+	router.Post("/api/extensions/upload", UploadExtensionHandler)
+	router.Get("/api/extensions", ListExtensionsHandler)
+	router.Get("/api/extensions/{id}/bundle", GetExtensionBundleHandler)
+	router.Delete("/api/extensions/{id}", DeleteExtensionHandler)
+	router.Patch("/api/extensions/{id}/toggle", ToggleExtensionHandler)
 
 	api := humachi.New(router, huma.DefaultConfig("marmot", "0.0.1"))
 

@@ -1,4 +1,4 @@
-import type { Component } from 'vue'
+import { reactive, ref, type Component } from 'vue'
 import {
   iconEngine,
   iconSpeedometer,
@@ -14,6 +14,8 @@ import TextLabelWidget, { TextLabelConfig } from './TextLabelWidget.vue'
 import TrafficLightWidget, { TrafficLightConfig } from './TrafficLightWidget.vue'
 import TrendChartWidget, { TrendChartConfig } from './TrendChartWidget.vue'
 import BarChartWidget, { BarChartConfig } from './BarChartWidget.vue'
+import WidgetErrorFallback from './WidgetErrorFallback.vue'
+import WidgetErrorConfig from './WidgetErrorConfig.vue'
 
 export type WidgetCategory = 'layout' | 'indicator' | 'chart' | 'annotation' | 'custom'
 
@@ -32,7 +34,9 @@ export interface WidgetManifest<TProps = Record<string, unknown>> {
   configComponent?: Component
 }
 
-export const widgetRegistry: Record<string, WidgetManifest> = {
+export const registryVersion = ref(0)
+
+export const widgetRegistry: Record<string, WidgetManifest> = reactive({
   'svg-machine': {
     type: 'svg-machine',
     name: 'Machine Layout',
@@ -160,13 +164,14 @@ export const widgetRegistry: Record<string, WidgetManifest> = {
     widgetComponent: TextLabelWidget,
     configComponent: TextLabelConfig,
   },
-}
+})
 
 /**
  * Register or dynamically extend a widget manifest at runtime (e.g. from ESM plugin)
  */
 export function registerWidget(manifest: WidgetManifest): void {
   widgetRegistry[manifest.type] = manifest
+  registryVersion.value++
 }
 
 export function getWidgetManifest(type: string): WidgetManifest | undefined {
@@ -174,6 +179,9 @@ export function getWidgetManifest(type: string): WidgetManifest | undefined {
 }
 
 export function getAllWidgets(): WidgetManifest[] {
+  if (registryVersion.value !== undefined) {
+    // track reactive dependency
+  }
   // Filter out aliases like 'chart' to avoid duplicates in palettes
   return Object.values(widgetRegistry).filter(
     (w, idx, self) => self.findIndex((item) => item.type === w.type) === idx && w.type !== 'chart'
@@ -184,10 +192,15 @@ export function getWidgetsByCategory(category: WidgetCategory): WidgetManifest[]
   return getAllWidgets().filter((w) => w.category === category)
 }
 
+export function unregisterWidget(type: string): void {
+  delete widgetRegistry[type]
+  registryVersion.value++
+}
+
 export function getWidgetComponent(type: string): Component {
-  return widgetRegistry[type]?.widgetComponent || SvgMachineWidget
+  return widgetRegistry[type]?.widgetComponent || WidgetErrorFallback
 }
 
 export function getWidgetConfigComponent(type: string): Component | undefined {
-  return widgetRegistry[type]?.configComponent
+  return widgetRegistry[type]?.configComponent || WidgetErrorConfig
 }

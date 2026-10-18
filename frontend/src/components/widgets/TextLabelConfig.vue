@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { onMounted } from 'vue'
 import { useDesigner } from '@/composables/useDesigner'
 import type { DashboardComponent } from '@/types/dashboard'
 
@@ -7,23 +7,10 @@ const props = defineProps<{
   component: DashboardComponent
 }>()
 
-const { availableDataPoints, updateComponent, fetchDataPoints } = useDesigner()
+const { availableDataPoints, groupedDataPoints, updateComponent, fetchDataPoints } = useDesigner()
 
 onMounted(() => {
   fetchDataPoints()
-})
-
-const groupedDataPoints = computed(() => {
-  const map = new Map<string, typeof availableDataPoints.value>()
-  for (const dp of availableDataPoints.value) {
-    const key = dp.machineId || 'General'
-    if (!map.has(key)) map.set(key, [])
-    map.get(key)!.push(dp)
-  }
-  return Array.from(map.entries()).map(([machineId, items]) => ({
-    machineId,
-    items,
-  }))
 })
 
 function updateProp(key: string, value: unknown) {

@@ -18,6 +18,7 @@ import {
 import { useSites } from '@/composables/useSites'
 import { useAuth } from '@/composables/useAuth'
 import { useTheme } from '@/composables/useTheme'
+import { useExtensionManager, type ExtensionItem } from '@/composables/useExtensionManager'
 import { widgetRegistry } from '@/components/widgets/registry'
 import type { SiteInfo } from '@/types/dashboard'
 
@@ -61,6 +62,7 @@ const serviceHealth = ref({
 
 onMounted(async () => {
   await fetchSites()
+  await fetchExtensions()
   runDiagnostics()
 })
 
@@ -175,10 +177,113 @@ async function runDiagnostics() {
   diagnosticsLoading.value = false
 }
 
-const installedWidgets = computed(() => Object.values(widgetRegistry))
+const {
+  extensions,
+  isLoading: isExtensionsLoading,
+  fetchExtensions,
+  uploadExtension,
+  toggleExtension,
+  deleteExtension,
+} = useExtensionManager()
 
-function showPhase3Notice() {
-  window.alert('Extension Upload SDK & MinIO storage pipeline will be fully connected in Phase 3!')
+const builtInTypes = new Set([
+  'svg-machine',
+  'gauge',
+  'traffic-light',
+  'trend-chart',
+  'chart',
+  'bar-chart',
+  'text-label',
+])
+
+const builtInWidgets = computed(() =>
+  Object.values(widgetRegistry).filter(
+    (w, idx, self) =>
+      builtInTypes.has(w.type) &&
+      self.findIndex((item) => item.type === w.type) === idx &&
+      w.type !== 'chart'
+  )
+)
+
+const showUploadModal = ref(false)
+const selectedZipFile = ref<File | null>(null)
+const uploadError = ref<string | null>(null)
+const uploadSuccess = ref<string | null>(null)
+const isUploading = ref(false)
+const isToggling = ref<Record<string, boolean>>({})
+
+function onFileSelected(event: Event) {
+  const input = event.target as HTMLInputElement
+  uploadError.value = null
+  uploadSuccess.value = null
+  if (!input.files || input.files.length === 0) {
+    selectedZipFile.value = null
+    return
+  }
+  const file = input.files[0]
+  if (!file) return
+
+  if (!file.name.toLowerCase().endsWith('.zip')) {
+    uploadError.value = 'Selected file must be a .zip extension archive'
+    selectedZipFile.value = null
+    return
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    uploadError.value = `File size (${(file.size / (1024 * 1024)).toFixed(1)} MB) exceeds the 5 MB maximum limit`
+    selectedZipFile.value = null
+    return
+  }
+  selectedZipFile.value = file
+}
+
+async function handleUploadExtension() {
+  if (!selectedZipFile.value) {
+    uploadError.value = 'Please select a .zip extension archive'
+    return
+  }
+
+  isUploading.value = true
+  uploadError.value = null
+  uploadSuccess.value = null
+
+  try {
+    const res = await uploadExtension(selectedZipFile.value)
+    uploadSuccess.value = `Extension "${res.name}" (v${res.version}) installed and activated!`
+    selectedZipFile.value = null
+    setTimeout(() => {
+      showUploadModal.value = false
+      uploadSuccess.value = null
+    }, 1500)
+  } catch (err: unknown) {
+    uploadError.value = err instanceof Error ? err.message : 'Upload failed'
+  } finally {
+    isUploading.value = false
+  }
+}
+
+async function handleToggleExtension(ext: ExtensionItem) {
+  isToggling.value[ext.id] = true
+  try {
+    await toggleExtension(ext.id, !ext.enabled)
+  } catch (err: unknown) {
+    window.alert(err instanceof Error ? err.message : 'Failed to toggle extension')
+  } finally {
+    isToggling.value[ext.id] = false
+  }
+}
+
+async function handleDeleteExtension(ext: ExtensionItem) {
+  if (
+    window.confirm(
+      `Are you sure you want to uninstall and remove extension "${ext.name}" (${ext.id})? This will delete the bundle from storage.`
+    )
+  ) {
+    try {
+      await deleteExtension(ext.id)
+    } catch (err: unknown) {
+      window.alert(err instanceof Error ? err.message : 'Failed to delete extension')
+    }
+  }
 }
 </script>
 
@@ -234,7 +339,7 @@ function showPhase3Notice() {
         >
           <OnyxIcon :icon="iconComputerSettings" />
           <span>Widget Extensions</span>
-          <span class="tab-count">{{ installedWidgets.length }}</span>
+          <span class="tab-count">{{ extensions.length + builtInWidgets.length }}</span>
         </button>
 
         <button
@@ -433,39 +538,154 @@ function showPhase3Notice() {
           <div>
             <h2 class="pane-title">Widget Extension Registry</h2>
             <p class="pane-subtitle">
-              Inspect installed visual components and prepare custom third-party extensions for hot-reloading via MinIO.
+              Manage custom third-party extensions hot-loaded from MinIO, inspect schemas, and package new widgets.
             </p>
           </div>
-        </div>
 
-        <!-- Extension Upload Area (Preparing Phase 3 SDK) -->
-        <div class="extension-upload-banner">
-          <div class="upload-icon-box">
-            <OnyxIcon :icon="iconComputerSettings" class="banner-icon" />
-          </div>
-          <div class="upload-info">
-            <span class="upload-title">Hot-Deploy Custom Widget Bundles</span>
-            <p class="upload-desc">
-              Developers can package Vue 3 single-file components with Chart.js and Onyx design tokens into ESM bundles.
-              Once uploaded, widgets are stored in MinIO and dynamically injected into the Marmot palette without backend recompilation.
-            </p>
-          </div>
-          <div class="upload-actions">
-            <button class="action-btn primary" title="Phase 3 Extension Upload" @click="showPhase3Notice">
+          <div class="pane-actions">
+            <button class="action-btn secondary" :disabled="isExtensionsLoading" @click="fetchExtensions">
+              <OnyxIcon :icon="iconSync" :class="{ spinning: isExtensionsLoading }" />
+              <span>Refresh</span>
+            </button>
+            <button class="action-btn primary" @click="showUploadModal = true">
               <OnyxIcon :icon="iconCirclePlus" />
-              <span>Install Extension Bundle</span>
+              <span>Install Extension (.zip)</span>
             </button>
           </div>
         </div>
 
-        <!-- Installed Manifests Grid -->
-        <h3 class="section-heading">Installed Widget Manifests ({{ installedWidgets.length }})</h3>
+        <!-- Install Extension Modal Card -->
+        <div v-if="showUploadModal" class="add-site-card">
+          <div class="modal-card-header">
+            <h3>Install Custom Widget Extension</h3>
+            <button class="close-x" @click="showUploadModal = false">×</button>
+          </div>
+
+          <p class="upload-modal-desc">
+            Upload a packaged <code>.zip</code> archive containing <code>manifest.json</code> and the compiled <code>bundle.js</code>. Maximum package size is <strong>5 MB</strong>.
+          </p>
+
+          <div v-if="uploadError" class="form-error-banner">
+            {{ uploadError }}
+          </div>
+
+          <div v-if="uploadSuccess" class="form-success-banner">
+            {{ uploadSuccess }}
+          </div>
+
+          <div class="file-drop-area">
+            <input
+              type="file"
+              accept=".zip"
+              class="file-input-hidden"
+              id="extension-zip-input"
+              @change="onFileSelected"
+            />
+            <label for="extension-zip-input" class="file-drop-label">
+              <OnyxIcon :icon="iconComputerSettings" class="drop-icon" />
+              <div v-if="!selectedZipFile" class="drop-text">
+                <span class="drop-action">Click to select .zip archive</span>
+                <span class="drop-sub">or drag and drop your widget package here (Max 5 MB)</span>
+              </div>
+              <div v-else class="drop-selected">
+                <span class="selected-name">{{ selectedZipFile.name }}</span>
+                <span class="selected-size">({{ (selectedZipFile.size / 1024).toFixed(1) }} KB)</span>
+              </div>
+            </label>
+          </div>
+
+          <div class="form-buttons">
+            <button class="btn secondary" :disabled="isUploading" @click="showUploadModal = false">Cancel</button>
+            <button
+              class="btn primary"
+              :disabled="!selectedZipFile || isUploading"
+              @click="handleUploadExtension"
+            >
+              {{ isUploading ? 'Uploading & Validating...' : 'Install & Activate' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Section 1: Installed Third-Party Extensions -->
+        <h3 class="section-heading">Custom Third-Party Extensions ({{ extensions.length }})</h3>
+        <div v-if="extensions.length > 0" class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Status</th>
+                <th>Widget ID</th>
+                <th>Name & Version</th>
+                <th>Category</th>
+                <th>Author</th>
+                <th>Description</th>
+                <th class="actions-col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="ext in extensions" :key="ext.id" class="site-row">
+                <td>
+                  <span v-if="ext.loadError" class="status-pill down" :title="ext.loadError">
+                    LOAD ERROR
+                  </span>
+                  <span v-else-if="ext.enabled" class="status-pill online">
+                    ACTIVE
+                  </span>
+                  <span v-else class="status-pill offline">
+                    DISABLED
+                  </span>
+                </td>
+                <td>
+                  <code class="site-id-badge">{{ ext.id }}</code>
+                </td>
+                <td>
+                  <strong>{{ ext.name }}</strong>
+                  <span class="version-tag">v{{ ext.version }}</span>
+                </td>
+                <td>
+                  <span class="category-pill" :class="ext.category">{{ ext.category }}</span>
+                </td>
+                <td>{{ ext.author || '--' }}</td>
+                <td class="desc-cell" :title="ext.description">{{ ext.description || '--' }}</td>
+                <td class="actions-col">
+                  <button
+                    class="table-btn"
+                    :title="ext.enabled ? 'Disable Widget' : 'Enable Widget'"
+                    :disabled="isToggling[ext.id]"
+                    @click="handleToggleExtension(ext)"
+                  >
+                    {{ ext.enabled ? 'Disable' : 'Enable' }}
+                  </button>
+                  <button
+                    class="table-btn delete"
+                    title="Uninstall Extension"
+                    @click="handleDeleteExtension(ext)"
+                  >
+                    <OnyxIcon :icon="iconDelete" />
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div v-else class="empty-extension-box">
+          <OnyxIcon :icon="iconComputerSettings" class="empty-icon" />
+          <p class="empty-title">No custom widget extensions installed yet</p>
+          <p class="empty-sub">
+            Click "Install Extension (.zip)" above to upload and hot-load third-party widgets into the Marmot palette.
+          </p>
+        </div>
+
+        <!-- Section 2: Core Built-in Widgets -->
+        <h3 class="section-heading" style="margin-top: 32px;">Core Built-in Widgets ({{ builtInWidgets.length }})</h3>
         <div class="widgets-manifest-grid">
-          <div v-for="manifest in installedWidgets" :key="manifest.type" class="manifest-card">
+          <div v-for="manifest in builtInWidgets" :key="manifest.type" class="manifest-card">
             <div class="card-top">
               <div class="widget-meta-header">
                 <div class="widget-type-badge">{{ manifest.type }}</div>
-                <span class="category-pill" :class="manifest.category">{{ manifest.category }}</span>
+                <div class="badge-group">
+                  <span class="core-pill">CORE</span>
+                  <span class="category-pill" :class="manifest.category">{{ manifest.category }}</span>
+                </div>
               </div>
               <h4 class="manifest-name">{{ manifest.name }}</h4>
               <p class="manifest-desc">{{ manifest.description }}</p>
@@ -477,8 +697,8 @@ function showPhase3Notice() {
                 <span class="spec-val">{{ manifest.defaultSize.width }} × {{ manifest.defaultSize.height }} px</span>
               </div>
               <div class="manifest-spec">
-                <span class="spec-label">Runtime Type</span>
-                <span class="spec-val">Vue 3 Core ESM</span>
+                <span class="spec-label">Scope</span>
+                <span class="spec-val">Protected Native</span>
               </div>
             </div>
           </div>
@@ -1201,6 +1421,172 @@ function showPhase3Notice() {
 .spec-val {
   font-size: 11px;
   font-weight: 600;
+}
+
+/* Extension Upload & Management Styles */
+.upload-modal-desc {
+  font-size: 13px;
+  color: var(--app-text-muted);
+  margin-top: 0;
+  margin-bottom: 14px;
+  line-height: 1.4;
+}
+
+.form-success-banner {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #10b981;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 14px;
+  font-weight: 500;
+}
+
+.file-drop-area {
+  margin-bottom: 16px;
+}
+
+.file-input-hidden {
+  display: none;
+}
+
+.file-drop-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  border: 2px dashed var(--app-border-strong);
+  border-radius: 8px;
+  background: var(--app-surface-subtle);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.file-drop-label:hover {
+  border-color: var(--app-accent);
+  background: var(--app-surface-hover);
+}
+
+.drop-icon {
+  width: 36px;
+  height: 36px;
+  color: var(--app-accent);
+}
+
+.drop-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.drop-action {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--app-text);
+}
+
+.drop-sub {
+  font-size: 12px;
+  color: var(--app-text-muted);
+}
+
+.drop-selected {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.selected-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--app-accent);
+}
+
+.selected-size {
+  font-size: 12px;
+  color: var(--app-text-muted);
+}
+
+.version-tag {
+  font-size: 11px;
+  color: var(--app-text-muted);
+  background: var(--app-surface-subtle);
+  border: 1px solid var(--app-border);
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  font-family: monospace;
+}
+
+.core-pill {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: rgba(2, 132, 199, 0.15);
+  color: #0284c7;
+  border: 1px solid rgba(2, 132, 199, 0.3);
+}
+
+.badge-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.desc-cell {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty-extension-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background: var(--app-surface);
+  border: 1px dashed var(--app-border-strong);
+  border-radius: 8px;
+  text-align: center;
+  color: var(--app-text-muted);
+}
+
+.empty-icon {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 10px;
+  opacity: 0.6;
+}
+
+.empty-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--app-text);
+  margin: 0 0 4px 0;
+}
+
+.empty-sub {
+  font-size: 12px;
+  margin: 0;
+  max-width: 420px;
+}
+
+.status-pill.down {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.status-pill.offline {
+  background: var(--app-surface-hover);
+  color: var(--app-text-muted);
 }
 
 /* Diagnostics */

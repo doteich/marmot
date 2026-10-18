@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { OnyxIcon } from 'sit-onyx'
 import {
   iconEngine,
@@ -7,6 +8,7 @@ import {
   iconChart,
   iconSpeedometer,
   iconToolText,
+  iconComputerSettings,
 } from '@sit-onyx/icons'
 import { useDesigner } from '@/composables/useDesigner'
 import { getWidgetsByCategory, type WidgetManifest } from '@/components/widgets/registry'
@@ -23,29 +25,44 @@ function handleAddWidget(manifest: WidgetManifest) {
   addComponent(manifest.type as ComponentType)
 }
 
-const categories = [
-  {
-    id: 'indicator',
-    title: 'Industrial Indicators',
-    desc: 'Gauges, status towers & live metrics',
-    icon: iconSpeedometer,
-    widgets: getWidgetsByCategory('indicator'),
-  },
-  {
-    id: 'chart',
-    title: 'Charts & Telemetry',
-    desc: 'Historical trends & throughput graphs',
-    icon: iconChart,
-    widgets: getWidgetsByCategory('chart'),
-  },
-  {
-    id: 'annotation',
-    title: 'Annotations & Labels',
-    desc: 'Text badges & machine zone labels',
-    icon: iconToolText,
-    widgets: getWidgetsByCategory('annotation'),
-  },
-]
+const categories = computed(() => {
+  const list = [
+    {
+      id: 'indicator',
+      title: 'Industrial Indicators',
+      desc: 'Gauges, status towers & live metrics',
+      icon: iconSpeedometer,
+      widgets: getWidgetsByCategory('indicator'),
+    },
+    {
+      id: 'chart',
+      title: 'Charts & Telemetry',
+      desc: 'Historical trends & throughput graphs',
+      icon: iconChart,
+      widgets: getWidgetsByCategory('chart'),
+    },
+    {
+      id: 'annotation',
+      title: 'Annotations & Labels',
+      desc: 'Text badges & machine zone labels',
+      icon: iconToolText,
+      widgets: getWidgetsByCategory('annotation'),
+    },
+  ]
+
+  const customWidgets = getWidgetsByCategory('custom')
+  if (customWidgets.length > 0) {
+    list.push({
+      id: 'custom',
+      title: 'Custom Extensions',
+      desc: 'Installed third-party widgets',
+      icon: iconComputerSettings,
+      widgets: customWidgets,
+    })
+  }
+
+  return list
+})
 </script>
 
 <template>

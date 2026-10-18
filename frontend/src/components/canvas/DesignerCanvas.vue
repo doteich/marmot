@@ -1,10 +1,16 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onErrorCaptured } from 'vue'
 import Moveable from 'vue3-moveable'
 import { useDesigner } from '@/composables/useDesigner'
 import { useTelemetry } from '@/composables/useTelemetry'
 import { getWidgetComponent } from '@/components/widgets/registry'
 import type { DashboardComponent } from '@/types/dashboard'
+
+onErrorCaptured((err, _instance, info) => {
+  console.error('[Marmot Designer] Captured widget render error:', err, info)
+  // Stop propagation to prevent tearing down the designer canvas
+  return false
+})
 
 interface MoveableDragEvent {
   left: number
