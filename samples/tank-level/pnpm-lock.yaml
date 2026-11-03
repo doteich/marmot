@@ -51,9 +51,6 @@ importers:
       prettier:
         specifier: 3.9.6
         version: 3.9.6
-      sit-onyx:
-        specifier: ^1.21.0
-        version: 1.21.0(@sit-onyx/icons@1.12.0)(typescript@6.0.3)(vue@3.5.44(typescript@6.0.3))
       typescript:
         specifier: ~6.0.0
         version: 6.0.3
@@ -531,10 +528,6 @@ packages:
 
   '@rolldown/pluginutils@1.0.1':
     resolution: {integrity: sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw==}
-
-  '@sit-onyx/icons@1.12.0':
-    resolution: {integrity: sha512-vcLFd0ne0YU1TmVPRlTk0Mi+kXxtTiTApUo1rQX8dsDR3ctiWyWsqS4Dw29BGRH1yOM9jJSw9C7J+72CUoSo5A==}
-    engines: {node: '>=20'}
 
   '@tsconfig/node24@24.0.5':
     resolution: {integrity: sha512-DWC54fGPuhZgg3Ighg4Y/A/bA3ZdB5hnzAuv/MkQ/X85sVsBsMQxu8t7khutdYeiNksBbFdDyeqv1HSW2Zl8aA==}
@@ -1343,14 +1336,6 @@ packages:
     resolution: {integrity: sha512-2wcC/oGxHis/BoHkkPwldgiPSYcpZK3JU28WoMVv55yHJgcZ8rlXvuG9iZggz+sU1d4bRgIGASwyWqjxu3FM0g==}
     engines: {node: '>=18'}
 
-  sit-onyx@1.21.0:
-    resolution: {integrity: sha512-uEOFmjdj3Z693ThwMj0gOosBsElBMcLBJpoXpkmdWRIIlD7W7VCccYTWvpXG+MY2llPRIdrjDm+kVrxybHH0Ig==}
-    engines: {node: '>=20'}
-    peerDependencies:
-      '@sit-onyx/icons': ^1.12.0
-      typescript: '>= 5.2.2'
-      vue: '>= 3.5.0'
-
   source-map-js@1.2.2:
     resolution: {integrity: sha512-KGj/8Y43x35aZVDtt+J4mK1hoLGHULMYfSkODJNQjNDC3oW1PqPoxMwo0pLUsWM/UEGzON/NxeHywEfNXNP3Vw==}
     engines: {node: '>=0.10.0'}
@@ -1931,8 +1916,6 @@ snapshots:
     optional: true
 
   '@rolldown/pluginutils@1.0.1': {}
-
-  '@sit-onyx/icons@1.12.0': {}
 
   '@tsconfig/node24@24.0.5': {}
 
@@ -2741,12 +2724,6 @@ snapshots:
       '@polka/url': 1.0.0-next.29
       mrmime: 2.0.1
       totalist: 3.0.1
-
-  sit-onyx@1.21.0(@sit-onyx/icons@1.12.0)(typescript@6.0.3)(vue@3.5.44(typescript@6.0.3)):
-    dependencies:
-      '@sit-onyx/icons': 1.12.0
-      typescript: 6.0.3
-      vue: 3.5.44(typescript@6.0.3)
 
   source-map-js@1.2.2: {}
 

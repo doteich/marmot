@@ -1,4 +1,4 @@
-import { ref, h, type Component } from 'vue'
+import { ref, h, markRaw, type Component } from 'vue'
 import { iconComputerSettings } from '@sit-onyx/icons'
 import {
   registerWidget,
@@ -103,12 +103,12 @@ export function useExtensionManager() {
         icon: iconComputerSettings,
         defaultSize: ext.manifest?.defaultSize || { width: 220, height: 220 },
         defaultProps: ext.manifest?.defaultProps || {},
-        widgetComponent: h(WidgetErrorFallback, {
+        widgetComponent: markRaw(h(WidgetErrorFallback, {
           title: `Error: ${ext.name}`,
           errorMessage: errMsg,
           type: ext.id,
-        }),
-        configComponent: WidgetErrorConfig,
+        })),
+        configComponent: markRaw(WidgetErrorConfig),
       }
       registerWidget(fallbackManifest)
       return false

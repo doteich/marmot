@@ -4,6 +4,7 @@ const isDark = ref(true)
 
 export function useTheme() {
   function initTheme() {
+    document.documentElement.classList.add('onyx-theme-default')
     const saved = localStorage.getItem('marmot-theme')
     if (saved === 'light') {
       isDark.value = false

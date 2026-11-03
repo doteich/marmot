@@ -14,12 +14,17 @@ import * as ChartJS from 'chart.js'
 
 declare global {
   interface Window {
+    process?: { env: Record<string, string> }
     __MARMOT_SDK__?: {
       vue: typeof Vue
       icons: typeof OnyxIcons
       chartjs: typeof ChartJS
     }
   }
+}
+
+if (typeof window !== 'undefined' && !window.process) {
+  window.process = { env: { NODE_ENV: 'production' } }
 }
 
 window.__MARMOT_SDK__ = {
