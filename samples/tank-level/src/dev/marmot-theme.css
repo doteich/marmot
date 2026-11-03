@@ -1,0 +1,240 @@
+/* ==========================================================================
+   Marmot Widget SDK - Development Theme Stylesheet
+   Simulates the Marmot SCADA host environment during local widget development.
+   (This file is imported in src/main.ts and is NOT included in the production build)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Canvas Document Themes
+   -------------------------------------------------------------------------- */
+
+:root,
+[data-canvas-theme="industrial-dark"] {
+  --canvas-bg: #121215;
+  --canvas-dots: rgba(255, 255, 255, 0.1);
+  --canvas-theme-surface: #18181b;
+  --canvas-theme-surface-subtle: #121215;
+  --canvas-theme-border: #27272a;
+  --canvas-theme-border-strong: #3f3f46;
+  --canvas-theme-text: #f4f4f5;
+  --canvas-theme-text-muted: #a1a1aa;
+  --canvas-theme-glass-bg: linear-gradient(135deg, rgba(34, 34, 37, 0.7) 0%, rgba(28, 28, 32, 0.75) 100%);
+  --canvas-theme-glass-border: rgba(255, 255, 255, 0.22);
+  --canvas-theme-glass-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 1px 1px 0 rgba(255, 255, 255, 0.25);
+
+  --app-bg: #09090b;
+  --app-surface: #18181b;
+  --app-surface-subtle: #121215;
+  --app-border: #27272a;
+  --app-input-bg: #18181b;
+  --app-input-border: #3f3f46;
+  --app-text: #f4f4f5;
+  --app-text-muted: #a1a1aa;
+  --app-accent: #0284c7;
+  --app-accent-hover: #38bdf8;
+
+  color: var(--canvas-theme-text);
+}
+
+[data-canvas-theme="cleanroom-light"] {
+  --canvas-bg: #f1f5f9;
+  --canvas-dots: rgba(0, 0, 0, 0.12);
+  --canvas-theme-surface: #ffffff;
+  --canvas-theme-surface-subtle: #f8fafc;
+  --canvas-theme-border: #e2e8f0;
+  --canvas-theme-border-strong: #cbd5e1;
+  --canvas-theme-text: #0f172a;
+  --canvas-theme-text-muted: #64748b;
+  --canvas-theme-glass-bg: linear-gradient(135deg, rgba(222, 222, 226, 0.62) 0%, rgba(213, 229, 245, 0.78) 100%);
+  --canvas-theme-glass-border: rgba(15, 23, 42, 0.22);
+  --canvas-theme-glass-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(15, 23, 42, 0.08), inset 0 1px 1px 0 rgba(255, 255, 255, 0.95);
+
+  --app-bg: #f8fafc;
+  --app-surface: #ffffff;
+  --app-surface-subtle: #f8fafc;
+  --app-border: #e2e8f0;
+  --app-input-bg: #ffffff;
+  --app-input-border: #cbd5e1;
+  --app-text: #0f172a;
+  --app-text-muted: #64748b;
+  --app-accent: #0284c7;
+  --app-accent-hover: #0369a1;
+
+  color: var(--canvas-theme-text);
+}
+
+/* --------------------------------------------------------------------------
+   Marmot Widget Container Classes
+   (Widgets inherit these automatically in production from Marmot host)
+   -------------------------------------------------------------------------- */
+
+.widget-card {
+  color: var(--canvas-theme-text);
+  box-sizing: border-box;
+  border-radius: 8px;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* 1. Frosted Glassmorphism */
+.widget-glass {
+  background: var(--canvas-theme-glass-bg) !important;
+  border: 1px solid var(--canvas-theme-glass-border) !important;
+  box-shadow: var(--canvas-theme-glass-shadow) !important;
+  backdrop-filter: blur(16px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+  color: var(--canvas-theme-text) !important;
+}
+
+/* 2. Industrial Solid */
+.widget-solid {
+  background: var(--canvas-theme-surface) !important;
+  border: 1px solid var(--canvas-theme-border) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.10) !important;
+  color: var(--canvas-theme-text) !important;
+}
+
+/* --------------------------------------------------------------------------
+   Config Component Standard Stack
+   (Developers use this wrapper so they write ZERO custom CSS for forms)
+   -------------------------------------------------------------------------- */
+.marmot-config-stack,
+.tank-level-config {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.section-card {
+  background: var(--app-surface-subtle);
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--app-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.grid-2x2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.field-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.field-item label,
+.form-row label {
+  font-size: 11px;
+  color: var(--app-text-muted);
+}
+
+.inspector-input,
+.inspector-select {
+  background: var(--app-input-bg);
+  border: 1px solid var(--app-input-border);
+  border-radius: 6px;
+  color: var(--app-text);
+  font-size: 12px;
+  padding: 6px 8px;
+  outline: none;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  transition: border-color 0.15s ease;
+  font-family: inherit;
+}
+
+.inspector-input:focus,
+.inspector-select:focus {
+  border-color: var(--app-accent);
+}
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.color-presets {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.color-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+  flex-shrink: 0;
+}
+
+.color-btn:hover {
+  transform: scale(1.1);
+}
+
+.color-btn.active {
+  border-color: #f8fafc;
+}
+
+.hex-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.color-picker {
+  width: 30px;
+  min-width: 30px;
+  max-width: 30px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--app-input-border);
+  border-radius: 4px;
+  cursor: pointer;
+  background: transparent;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}

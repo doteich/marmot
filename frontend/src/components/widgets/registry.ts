@@ -1,4 +1,4 @@
-import { reactive, ref, type Component } from 'vue'
+import { reactive, ref, markRaw, type Component } from 'vue'
 import {
   iconEngine,
   iconSpeedometer,
@@ -170,6 +170,12 @@ export const widgetRegistry: Record<string, WidgetManifest> = reactive({
  * Register or dynamically extend a widget manifest at runtime (e.g. from ESM plugin)
  */
 export function registerWidget(manifest: WidgetManifest): void {
+  if (manifest.widgetComponent) {
+    manifest.widgetComponent = markRaw(manifest.widgetComponent)
+  }
+  if (manifest.configComponent) {
+    manifest.configComponent = markRaw(manifest.configComponent)
+  }
   widgetRegistry[manifest.type] = manifest
   registryVersion.value++
 }
