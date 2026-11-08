@@ -7,6 +7,7 @@ const props = withDefaults(
   defineProps<{
     shape?: TankShape
     fillColor?: string
+    backgroundColor?: string
     capacity?: number
     dataPoint?: string
     value?: number
@@ -15,6 +16,7 @@ const props = withDefaults(
   {
     shape: 'tank_barrel',
     fillColor: '#0284c7',
+    backgroundColor: '',
     capacity: 1000,
     dataPoint: '',
     value: 650,
@@ -129,71 +131,38 @@ const clipHeight = computed(() => {
 </script>
 
 <template>
-  <div class="widget-card widget-glass tank-widget">
+  <div class="widget-card tank-widget" :class="props.backgroundColor == ''  ? 'widget-glass' : '' "
+    :style="{ background: props.backgroundColor }">
     <!-- Single Unified SVG Graphic -->
     <div class="tank-graphic-wrapper">
-      <svg
-        class="tank-svg"
-        :viewBox="currentTemplate.viewBox"
-        preserveAspectRatio="xMidYMid meet"
-      >
+      <svg class="tank-svg" :viewBox="currentTemplate.viewBox" preserveAspectRatio="xMidYMid meet">
         <defs>
           <clipPath :id="clipId">
-            <rect
-              x="-5"
-              :y="clipY"
-              width="92"
-              :height="clipHeight"
-            />
+            <rect x="-5" :y="clipY" width="92" :height="clipHeight" />
           </clipPath>
         </defs>
 
         <!-- Layer 1: Tank Support Legs -->
         <g class="tank-legs">
-          <path
-            v-for="(leg, i) in currentTemplate.legs"
-            :key="'leg-' + i"
-            :d="leg.d"
-            :transform="leg.transform"
-            fill="#475569"
-          />
+          <path v-for="(leg, i) in currentTemplate.legs" :key="'leg-' + i" :d="leg.d" :transform="leg.transform"
+            fill="#475569" />
         </g>
 
         <!-- Layer 2: Solid Grey Base Tank Body -->
-        <path
-          :d="currentTemplate.body.d"
-          :transform="currentTemplate.body.transform"
-          fill="#334155"
-          opacity="0.5"
-        />
+        <path :d="currentTemplate.body.d" :transform="currentTemplate.body.transform" fill="#334155" opacity="0.5" />
 
         <!-- Layer 3: Liquid Fill Overlay (Gradual fill with selected color, clipped to percentage) -->
         <g :clip-path="`url(#${clipId})`">
-          <path
-            :d="currentTemplate.body.d"
-            :transform="currentTemplate.body.transform"
-            :fill="fillColor"
-            opacity="0.9"
-          />
+          <path :d="currentTemplate.body.d" :transform="currentTemplate.body.transform" :fill="fillColor"
+            opacity="0.9" />
         </g>
 
         <!-- Layer 4: Tank Outline Stroke -->
-        <path
-          :d="currentTemplate.body.d"
-          :transform="currentTemplate.body.transform"
-          fill="none"
-          stroke="#64748b"
-          stroke-width="1.5"
-        />
+        <path :d="currentTemplate.body.d" :transform="currentTemplate.body.transform" fill="none" stroke="#64748b"
+          stroke-width="1.5" />
 
         <!-- Layer 5: Rim Outline (for barrel shape) -->
-        <path
-          v-if="currentTemplate.rim"
-          :d="currentTemplate.rim"
-          fill="none"
-          stroke="#64748b"
-          stroke-width="1.5"
-        />
+        <path v-if="currentTemplate.rim" :d="currentTemplate.rim" fill="none" stroke="#64748b" stroke-width="1.5" />
       </svg>
     </div>
 
@@ -204,10 +173,7 @@ const clipHeight = computed(() => {
         <span class="percent-text">{{ fillPercent }}%</span>
       </div>
       <div class="tank-bar-track">
-        <div
-          class="tank-bar-fill"
-          :style="{ width: `${fillPercent}%`, backgroundColor: fillColor }"
-        ></div>
+        <div class="tank-bar-fill" :style="{ width: `${fillPercent}%`, backgroundColor: fillColor }"></div>
       </div>
     </div>
   </div>

@@ -1,0 +1,14 @@
+{
+  "id": "{{WIDGET_ID}}",
+  "name": "{{WIDGET_NAME_JSON}}",
+  "version": "{{WIDGET_VERSION}}",
+  "category": "{{WIDGET_CATEGORY}}",
+  "description": "{{WIDGET_DESCRIPTION_JSON}}",
+  "author": "{{WIDGET_AUTHOR_JSON}}",
+  "entry": "bundle.js",
+  "defaultSize": {
+    "width": {{DEFAULT_WIDTH}},
+    "height": {{DEFAULT_HEIGHT}}
+  },
+  "defaultProps": {{DEFAULT_PROPS_JSON}}
+}

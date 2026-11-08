@@ -1,0 +1,30 @@
+{
+  "name": "create-marmot-widget",
+  "version": "1.0.0",
+  "description": "Scaffold a new Marmot SCADA/HMI extension widget project",
+  "type": "module",
+  "bin": {
+    "create-marmot-widget": "./index.js"
+  },
+  "files": [
+    "index.js",
+    "lib",
+    "templates",
+    "README.md"
+  ],
+  "keywords": [
+    "marmot",
+    "scada",
+    "hmi",
+    "widget",
+    "extension",
+    "sdk",
+    "scaffold",
+    "vite",
+    "vue"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "id": "trend-counter",
+  "name": "Trend Counter",
+  "version": "1.0.0",
+  "category": "indicator",
+  "description": "Numerical readout with a directional trend arrow computed from the last live samples",
+  "author": "Marmot Dev",
+  "entry": "bundle.js",
+  "defaultSize": {
+    "width": 260,
+    "height": 170
+  },
+  "defaultProps": {
+    "label": "Counter",
+    "unit": "",
+    "precision": 1,
+    "value": 0,
+    "dataPoint": "",
+    "windowSize": 5,
+    "flatThreshold": 0.001,
+    "showDelta": true,
+    "upColor": "#10b981",
+    "downColor": "#ef4444",
+    "flatColor": "#f59e0b",
+    "backgroundColor": ""
+  }
+}
